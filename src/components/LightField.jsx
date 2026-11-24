@@ -56,85 +56,83 @@ const vec3 NIGHT = vec3(0.020, 0.035, 0.110);
 const vec3 DEEP  = vec3(0.075, 0.180, 0.560);
 const vec3 BLUE  = vec3(0.184, 0.420, 1.000);
 const vec3 SKY   = vec3(0.560, 0.700, 1.000);
-const vec3 WARM  = vec3(1.000, 0.560, 0.330);
+const vec3 WARM  = vec3(1.000, 0.520, 0.300);
 const vec3 HOT   = vec3(1.000, 0.945, 0.885);
 
 void main() {
-  vec2 screen = vec2(vUv.x * uRes.x, (1.0 - vUv.y) * uRes.y); // y down, like the DOM
+  vec2 px = vec2(vUv.x * uRes.x, (1.0 - vUv.y) * uRes.y); // y down, like the DOM
   float t = uTime;
-  float floorY = screen.y - uBase;                              // > 0 on the floor
-  bool mirror = floorY > 0.0;
-
-  // ---- the floor is a glossy surface: below the horizon we look up the
-  // light at its mirrored position, squashed a little and rippled sideways
-  vec2 px = screen;
-  float reflection = 1.0;
-  if (mirror) {
-    px.y = max(uBase - floorY * 1.6, 0.0);
-    px.x += sin(floorY * 0.11 - t * 1.6) * (1.0 + floorY * 0.02) + sin(floorY * 0.035 + t * 0.7) * 3.0;
-    reflection = 0.62 * exp(-floorY / max((uRes.y - uBase) * 0.45, 1.0));
-  }
-
   float x = (px.x - 0.5 * uRes.x) / (0.5 * uRes.x);       // -1 .. 1
   float above = (uBase - px.y) / max(uBase, 1.0);          // 0 at horizon, 1 at top
+  float below = (px.y - uBase) / max(uRes.y - uBase, 1.0); // 0 at horizon, 1 at bottom
 
   // ---- the fluid: slow swirls bend the striations sideways
   vec2 q = vec2(px.x / uRes.x * 2.6, px.y / uRes.y * 1.4);
   float w1 = fbm(q + vec2(0.0, t * 0.06)) - 0.5;
   float w2 = fbm(q * 1.7 + vec2(5.2, -t * 0.09)) - 0.5;
-  float bend = (w1 * 70.0 + w2 * 28.0);
+  float bend = (w1 * 34.0 + w2 * 14.0);
 
   // ---- striations: noise stretched tall, flowing upward
-  float cell = 15.0 / uDensity;                    // px per striation
+  float cell = 11.0 / uDensity;                    // px per striation
   float sx = (px.x + bend) / cell;
   float sy = px.y / uRes.y;
   float s1 = noise(vec2(sx, sy * 1.6 + t * 0.22));
   float s2 = noise(vec2(sx * 2.3 + 17.0, sy * 3.0 + t * 0.35));
   float s3 = noise(vec2(sx * 0.45 + 3.0, sy * 0.8 + t * 0.12));
-  float streak = s1 * 0.5 + s2 * 0.3 + s3 * 0.2;
-  streak = smoothstep(0.18, 0.95, streak);
-  streak = pow(streak, 1.35);
+  float streak = s1 * 0.55 + s2 * 0.33 + s3 * 0.12;
+  streak = smoothstep(0.15, 0.9, streak);
 
   // ---- shape of the light: a wide cone that rises from the horizon
   float env = exp(-(x * x) / (2.0 * uSpread * uSpread));
   float ragged = 0.75 + 0.5 * fbm(vec2(px.x / 140.0 + bend / 200.0, t * 0.08));
-  float height = (0.28 + 0.72 * pow(env, 0.8)) * ragged;
-  float rise = above > 0.0 ? exp(-above / max(height * 0.62, 0.05)) : 0.0;
+  float height = (0.4 + 0.75 * pow(env, 0.7)) * ragged;
+  float rise = above > 0.0 ? exp(-above / max(height * 0.75, 0.05)) : 0.0;
 
   // a faint wash of striations over everything, so the field covers the page
-  float wash = 0.26 * (1.0 - 0.45 * clamp(above, 0.0, 1.0)) * (0.55 + 0.45 * env);
+  float wash = 0.34 * (1.0 - 0.4 * clamp(above, 0.0, 1.0)) * (0.6 + 0.4 * env);
+  if (above < 0.0) wash *= exp(-below * 2.5);
 
   float body = rise * (0.35 + 0.65 * env);
-  float I = (body + wash) * (0.25 + 1.05 * streak);
+  float I = (body + wash) * (0.55 + 0.7 * streak);
+  float smoothI = body + wash;
 
   // ---- warm core: a soft flame-shaped glow just above the horizon
   float ay = max(above, 0.0);
-  float core = exp(-(x * x) / (0.1 + ay * 0.9) - ay * ay / 0.11) * step(0.0, above);
-  float heat = clamp(core * 1.2 + body * env * env * 0.75, 0.0, 1.0);
+  // a flame: wide at the horizon, narrowing as it rises
+  float flame = exp(-(x * x) / (0.012 + 0.32 * exp(-ay * 9.0)) - ay / 0.32) * step(0.0, above);
+  // a warm band hugging the horizon
+  float band = exp(-ay / 0.07 - (x * x) / 0.4) * step(0.0, above);
+  float heat = clamp(flame * 1.0 + band * 0.75, 0.0, 1.0);
+  I += flame * 0.22 + band * 0.12;
+  // the warm light is a soft glow, not striated
+  I = mix(I, smoothI * 1.05 + flame * 0.22 + band * 0.12, heat * 0.6);
 
-  // the reflection is dimmer and fades with distance from the horizon
-  I *= reflection;
+  // ---- reflection below the horizon
+  if (above < 0.0) {
+    float refl = exp(-below * 5.0) * (0.3 + 0.7 * env);
+    I += refl * (0.45 + 0.5 * streak) * 0.85;
+    heat = max(heat, exp(-below * 7.0) * exp(-(x * x) / 0.4) * 0.75);
+  }
 
   // ---- horizon glow: an ellipse of light, no hard line
-  float sxh = (screen.x - 0.5 * uRes.x) / (0.5 * uRes.x);
-  float dy = floorY / 22.0;
-  float haze = exp(-dy * dy) * exp(-(sxh * sxh) / 0.24);
+  float dy = (px.y - uBase) / 22.0;
+  float haze = exp(-dy * dy) * exp(-(x * x) / 0.18);
   I += haze * 0.55;
   heat = max(heat, haze);
 
   // ---- colour: blue body, warming toward the core
   vec3 cool = mix(NIGHT, DEEP, smoothstep(0.0, 0.25, I));
   cool = mix(cool, BLUE, smoothstep(0.2, 0.6, I));
-  cool = mix(cool, SKY, smoothstep(0.65, 1.2, I));
-  vec3 warm = mix(WARM, HOT, smoothstep(0.55, 1.3, I * (0.6 + heat)));
-  vec3 col = mix(cool, warm, smoothstep(0.08, 0.7, heat));
+  cool = mix(cool, SKY, smoothstep(0.8, 1.5, I));
+  vec3 warm = mix(WARM, HOT, smoothstep(0.95, 1.7, I * (0.5 + heat)));
+  vec3 col = mix(cool, warm, smoothstep(0.12, 0.8, heat));
   float alpha = clamp(I * 1.15, 0.0, 1.0);
 
   // ---- stars in the dark sky
   vec2 sg = px / 34.0;
   vec2 sid = floor(sg);
   float sh = hash(sid);
-  if (sh > 0.93 && above > 0.25 && !mirror) {
+  if (sh > 0.93 && above > 0.25) {
     vec2 sp = fract(sg) - 0.5 - (vec2(hash(sid + 3.1), hash(sid + 7.7)) - 0.5) * 0.6;
     float tw = 0.5 + 0.5 * sin(t * (0.6 + sh * 2.0) + sh * 50.0);
     float star = smoothstep(0.06, 0.0, length(sp)) * (0.25 + 0.55 * tw) * (1.0 - rise);
@@ -143,7 +141,7 @@ void main() {
   }
 
   // ---- sparks: motes of light drifting up out of the core
-  if (uSparks > 0.0 && above > 0.0 && !mirror) {
+  if (uSparks > 0.0 && above > 0.0) {
     vec2 g = px / 26.0;
     float lane = floor(g.x);
     g.y += t * (0.5 + hash(vec2(lane, 1.0)) * 0.9);
