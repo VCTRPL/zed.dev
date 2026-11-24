@@ -18,6 +18,7 @@ export const projects = [
       ["Veículos", "Fichas", "/work/xcar-3.webp"],
     ],
     alt: "Página inicial da XCAR Veículos com a logo vermelha em 3D",
+    cover: { base: "#1c0608", glow: "rgba(226, 36, 47, .85)", accent: "rgba(255, 120, 90, .35)" },
     href: "https://xcar-theta.vercel.app",
   },
   {
@@ -31,6 +32,7 @@ export const projects = [
       ["Destaque 3D", "WebGL", "/work/oiveiculos-2.webp"],
     ],
     alt: "Seção da Oi Veículos com um carro esportivo azul em 3D",
+    cover: { base: "#050c22", glow: "rgba(47, 107, 255, .85)", accent: "rgba(128, 176, 255, .35)" },
     href: "https://oi-veiculos.vercel.app",
   },
   {
@@ -44,6 +46,7 @@ export const projects = [
       ["Currículo", "CRT", "/work/curriculo.webp"],
     ],
     alt: "Escritório 3D à noite com um computador dos anos 80 sobre a mesa",
+    cover: { base: "#14081c", glow: "rgba(255, 122, 61, .8)", accent: "rgba(176, 75, 214, .45)" },
     href: "https://vctrpl.vercel.app",
   },
 ];

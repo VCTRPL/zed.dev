@@ -54,6 +54,7 @@ export default function GlassFolder({
   meta,
   tone = "dark",
   image,
+  cover,
   files = [],
   action = "more",
   menu = [],
@@ -205,7 +206,12 @@ export default function GlassFolder({
           <div className="gf-shadow" aria-hidden="true" />
 
           <div className="gf-back" style={{ clipPath: `path('${BACK_PATH}')` }} aria-hidden="true">
-            {image && (
+            {cover ? (
+              <div
+                className="gf-cover"
+                style={{ "--c-base": cover.base, "--c-glow": cover.glow, "--c-accent": cover.accent }}
+              />
+            ) : image && (
               <img
                 className="gf-art"
                 src={image}

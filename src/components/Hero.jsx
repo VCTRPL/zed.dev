@@ -51,6 +51,7 @@ function ProjectSlot({ p, i, active, onActive }) {
         label={p.name}
         meta={(p.concept ? "Conceito · " : "") + p.tag}
         image={p.img}
+        cover={p.cover}
         action="more"
         menu={[{ label: "Abrir o site", onSelect: () => window.open(p.href, "_blank", "noopener") }]}
         files={p.files.map(([name, meta, image]) => ({ name, meta, image, href: p.href }))}
