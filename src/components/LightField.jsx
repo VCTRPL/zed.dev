@@ -98,19 +98,19 @@ void main() {
 
   // ---- warm core: a soft flame-shaped glow just above the horizon
   float ay = max(above, 0.0);
-  // a flame: wide at the horizon, narrowing as it rises
-  float flame = exp(-(x * x) / (0.012 + 0.32 * exp(-ay * 9.0)) - ay / 0.32) * step(0.0, above);
+  // a dome: wide at the horizon with a rounded top
+  float flame = exp(-pow((x * x) / 0.07 + (ay * ay) / 0.11, 1.4)) * step(0.0, above);
   // a warm band hugging the horizon
   float band = exp(-ay / 0.07 - (x * x) / 0.4) * step(0.0, above);
   // warm shoulders: the glow spills out to the sides, tall in the middle and
   // sloping down toward the edges, hugging the horizon at the far ends
-  float shoulder = 0.05 + 0.3 * exp(-(x * x) / 0.12);
+  float shoulder = 0.09 + 0.28 * exp(-(x * x) / 0.2);
   float skirt = exp(-ay / shoulder) * (0.5 + 0.5 * exp(-(x * x) / 0.7)) * step(0.0, above);
   float coreHeat = clamp(flame * 1.0 + band * 0.75, 0.0, 1.0); // drives the white-hot centre
-  float heat = clamp(coreHeat + skirt * 0.85, 0.0, 1.0);
+  float heat = clamp(coreHeat + skirt * 0.7, 0.0, 1.0);
   I += flame * 0.22 + band * 0.12;
   // the warm light is a soft glow, not striated
-  I = mix(I, smoothI * 1.05 + flame * 0.22 + band * 0.12, heat * 0.6);
+  I = mix(I, smoothI * 0.85 + flame * 0.18 + band * 0.1, heat * 0.6);
 
   // ---- reflection below the horizon
   if (above < 0.0) {
@@ -130,8 +130,8 @@ void main() {
   cool = mix(cool, BLUE, smoothstep(0.2, 0.6, I));
   cool = mix(cool, SKY, smoothstep(0.8, 1.5, I));
   // orange in the middle, turning coral toward the edges
-  vec3 edgeWarm = mix(WARM, vec3(0.98, 0.40, 0.38), smoothstep(0.25, 0.9, abs(x)));
-  vec3 warm = mix(edgeWarm, HOT, smoothstep(0.95, 1.7, I * (0.5 + coreHeat)));
+  vec3 edgeWarm = mix(WARM, vec3(0.98, 0.40, 0.38), smoothstep(0.25, 0.9, abs(x))) * 0.82;
+  vec3 warm = mix(edgeWarm, HOT, smoothstep(1.05, 1.9, I * (0.5 + coreHeat)));
   vec3 col = mix(cool, warm, smoothstep(0.12, 0.8, heat));
   float alpha = clamp(I * 1.15, 0.0, 1.0);
 
