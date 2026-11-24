@@ -12,7 +12,7 @@ npm run build    # gera a pasta dist/ (é o que a Vercel publica)
 
 ## Estrutura
 
-- `src/components/LightField.jsx`: a cortina de luz fluida (shader WebGL) do topo, do Processo e do card Sobre
+- `src/components/LightField.jsx`: a cortina de luz com linhas finas (shader WebGL) do topo, do Processo e do card Sobre
 - `src/components/GlassFolder.jsx`: as pastas de vidro dos projetos
 - `src/components/HalftoneFooter.jsx`: rodapé com a marca em pontos
 - `src/three/zed-scene.js`: a logo em 3D
