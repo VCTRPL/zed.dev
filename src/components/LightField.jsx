@@ -59,121 +59,127 @@ const vec3 SKY   = vec3(0.560, 0.700, 1.000);
 const vec3 WARM  = vec3(1.000, 0.520, 0.300);
 const vec3 HOT   = vec3(1.000, 0.945, 0.885);
 
+// ---- colour ramps measured from the reference ------------------------------
+// above the boundary, by distance d from it (0 = at the boundary)
+vec3 coolRamp(float d) {
+  vec3 c = vec3(235.0, 212.0, 206.0);
+  c = mix(c, vec3(160.0, 195.0, 215.0), smoothstep(0.00, 0.04, d));
+  c = mix(c, vec3( 90.0, 160.0, 205.0), smoothstep(0.04, 0.08, d));
+  c = mix(c, vec3( 55.0, 115.0, 180.0), smoothstep(0.08, 0.14, d));
+  c = mix(c, vec3( 35.0,  85.0, 155.0), smoothstep(0.14, 0.20, d));
+  c = mix(c, vec3( 20.0,  52.0, 110.0), smoothstep(0.20, 0.28, d));
+  c = mix(c, vec3(  8.0,  25.0,  65.0), smoothstep(0.28, 0.36, d));
+  c = mix(c, vec3(  5.0,   8.0,  32.0), smoothstep(0.36, 0.48, d));
+  c = mix(c, vec3(  6.0,   3.0,  22.0), smoothstep(0.48, 0.80, d));
+  return c / 255.0;
+}
+// below the boundary, by depth e under it: peach, orange, deeper orange
+vec3 warmRamp(float e) {
+  vec3 c = vec3(235.0, 214.0, 208.0);
+  c = mix(c, vec3(240.0, 200.0, 182.0), smoothstep(0.00, 0.05, e));
+  c = mix(c, vec3(241.0, 188.0, 160.0), smoothstep(0.05, 0.10, e));
+  c = mix(c, vec3(238.0, 165.0, 125.0), smoothstep(0.10, 0.15, e));
+  c = mix(c, vec3(234.0, 142.0, 100.0), smoothstep(0.15, 0.20, e));
+  c = mix(c, vec3(215.0, 112.0,  80.0), smoothstep(0.20, 0.30, e));
+  c = mix(c, vec3(180.0,  85.0,  65.0), smoothstep(0.30, 0.45, e));
+  return c / 255.0;
+}
+// the same depth at the far edges, where the warm light turns coral
+vec3 coralRamp(float e) {
+  vec3 c = vec3(140.0, 128.0, 150.0);
+  c = mix(c, vec3(190.0, 136.0, 142.0), smoothstep(0.00, 0.08, e));
+  c = mix(c, vec3(220.0, 136.0, 131.0), smoothstep(0.08, 0.14, e));
+  c = mix(c, vec3(213.0, 113.0, 106.0), smoothstep(0.14, 0.20, e));
+  c = mix(c, vec3(170.0,  75.0,  75.0), smoothstep(0.20, 0.35, e));
+  return c / 255.0;
+}
+
+// Colour of the field at horizontal position ax (0 centre .. 1 edge) and
+// height f (0 top .. 0.88 horizon, the reference's proportions).
+float boundary(float ax) {
+  return 0.55 + 0.29 * smoothstep(0.12, 0.55, ax) - 0.09 * smoothstep(0.85, 1.0, ax);
+}
+
+vec3 field(float ax, float f) {
+  // the boundary: high in the middle, dropping toward the sides, rising again at the edges
+  float b = boundary(ax);
+  float d = b - f;
+  vec3 cool = coolRamp(max(d, 0.0));
+  // a brighter pale-blue column up the middle
+  cool = mix(cool, coolRamp(max(d, 0.0) * 0.65), exp(-(ax * ax) / 0.02));
+  // the blue darkens a little toward the sides
+  cool *= mix(1.1, 0.95, smoothstep(0.1, 1.0, ax));
+  // at the far edges the seam is a cool light blue, not white
+  float edge = smoothstep(0.6, 1.0, ax);
+  float seam = 1.0 - smoothstep(0.0, 0.1, d);
+  cool = mix(cool, vec3(100.0, 125.0, 160.0) / 255.0, seam * edge * 0.8);
+  float e = max(-d, 0.0);
+  vec3 warm = mix(warmRamp(e), coralRamp(e), smoothstep(0.5, 0.95, ax));
+  return mix(cool, warm, smoothstep(-0.015, 0.015, -d));
+}
+
 void main() {
   vec2 px = vec2(vUv.x * uRes.x, (1.0 - vUv.y) * uRes.y); // y down, like the DOM
   float t = uTime;
   float x = (px.x - 0.5 * uRes.x) / (0.5 * uRes.x);       // -1 .. 1
-  float above = (uBase - px.y) / max(uBase, 1.0);          // 0 at horizon, 1 at top
-  float below = (px.y - uBase) / max(uRes.y - uBase, 1.0); // 0 at horizon, 1 at bottom
+  float base = max(uBase, 1.0);
+  float floorY = px.y - base;                              // > 0 below the horizon
 
-  // ---- the fluid: slow swirls bend the striations sideways
+  // ---- fine vertical lines that flow slowly upward and sway
   vec2 q = vec2(px.x / uRes.x * 2.6, px.y / uRes.y * 1.4);
   float w1 = fbm(q + vec2(0.0, t * 0.06)) - 0.5;
   float w2 = fbm(q * 1.7 + vec2(5.2, -t * 0.09)) - 0.5;
-  float bend = (w1 * 34.0 + w2 * 14.0);
-
-  // ---- striations: noise stretched tall, flowing upward
-  float cell = 11.0 / uDensity;                    // px per striation
+  float bend = w1 * 22.0 + w2 * 9.0;
+  float cell = 10.0 / uDensity;                            // px per line
   float sx = (px.x + bend) / cell;
   float sy = px.y / uRes.y;
-  float s1 = noise(vec2(sx, sy * 1.6 + t * 0.22));
-  float s2 = noise(vec2(sx * 2.3 + 17.0, sy * 3.0 + t * 0.35));
-  float s3 = noise(vec2(sx * 0.45 + 3.0, sy * 0.8 + t * 0.12));
-  float streak = s1 * 0.55 + s2 * 0.33 + s3 * 0.12;
-  streak = smoothstep(0.15, 0.9, streak);
+  float s1 = noise(vec2(sx * 0.35, sy * 1.6 + t * 0.22));
+  float s2 = noise(vec2(sx * 0.8 + 17.0, sy * 3.0 + t * 0.35));
+  // regular hairlines whose brightness drifts with the flow
+  float comb = pow(0.5 + 0.5 * cos(6.2831853 * sx), 2.0);
+  float streak = clamp(comb * (0.45 + 0.9 * (s1 * 0.6 + s2 * 0.4)), 0.0, 1.0);
 
-  // ---- shape of the light: a wide cone that rises from the horizon
-  float env = exp(-(x * x) / (2.0 * uSpread * uSpread));
-  float ragged = 0.75 + 0.5 * fbm(vec2(px.x / 140.0 + bend / 200.0, t * 0.08));
-  float height = (0.4 + 0.75 * pow(env, 0.7)) * ragged;
-  float rise = above > 0.0 ? exp(-above / max(height * 0.75, 0.05)) : 0.0;
+  // the field is shaped by the horizon: f = 0.88 sits on it
+  float f = px.y / base * 0.88;
+  float ax = clamp(abs(x + bend / uRes.x * 0.6), 0.0, 1.0);
+  // a slow breathing of the boundary keeps the light alive
+  f += 0.012 * sin(t * 0.45 + x * 2.0);
 
-  // a faint wash of striations over everything, so the field covers the page
-  float wash = 0.34 * (1.0 - 0.4 * clamp(above, 0.0, 1.0)) * (0.6 + 0.4 * env);
-  if (above < 0.0) wash *= exp(-below * 2.5);
-
-  float body = rise * (0.35 + 0.65 * env);
-  float I = (body + wash) * (0.55 + 0.7 * streak);
-  float smoothI = body + wash;
-
-  // ---- warm core: a soft flame-shaped glow just above the horizon
-  float ay = max(above, 0.0);
-  // a dome: wide at the horizon with a rounded top
-  float flame = exp(-pow((x * x) / 0.1 + (ay * ay) / 0.16, 1.05)) * step(0.0, above);
-  // a warm band hugging the horizon
-  float band = exp(-ay / 0.07 - (x * x) / 0.4) * step(0.0, above);
-  // warm shoulders: the glow spills out to the sides, tall in the middle and
-  // sloping down toward the edges, hugging the horizon at the far ends
-  float shoulder = 0.24 + 0.26 * exp(-(x * x) / 0.25);
-  float skirt = exp(-pow(ay / shoulder, 1.1)) * (0.7 + 0.3 * exp(-(x * x) / 0.7)) * step(0.0, above);
-  float coreHeat = clamp(flame * 1.0 + band * 0.75, 0.0, 1.0); // drives the white-hot centre
-  float heat = clamp(coreHeat + skirt * 0.75, 0.0, 1.0);
-  I += skirt * 0.12; // the warm shoulders glow on their own
-  I += flame * 0.22 + band * 0.12;
-  // the warm light is a soft glow, not striated
-  I = mix(I, smoothI * 0.85 + flame * 0.18 + band * 0.1, heat * 0.8);
-
-  // ---- reflection below the horizon
-  if (above < 0.0) {
-    float refl = exp(-below * 5.0) * (0.3 + 0.7 * env);
-    I += refl * (0.45 + 0.5 * streak) * 0.85;
-    heat = max(heat, exp(-below * 7.0) * (0.45 + 0.55 * exp(-(x * x) / 0.4)) * 0.75);
+  vec3 col;
+  float lines;
+  if (floorY <= 0.0) {
+    col = field(ax, f);
+    // lines read clearly in the blue and softly in the warm light
+    float warmth = smoothstep(0.0, 0.08, f - boundary(ax));
+    lines = mix(0.30, 0.14, warmth);
+    col *= 1.0 - lines + lines * streak * 2.7; // the hairlines keep the average brightness
+  } else {
+    // ---- the floor mirrors the light, rippled and fading
+    float my = base - floorY * 1.6;
+    float rx = sin(floorY * 0.11 - t * 1.6) * (1.0 + floorY * 0.02) + sin(floorY * 0.035 + t * 0.7) * 3.0;
+    float mx = clamp(abs((px.x + rx - 0.5 * uRes.x) / (0.5 * uRes.x)), 0.0, 1.0);
+    col = field(mx, max(my, 0.0) / base * 0.88);
+    col *= 0.8 + 0.4 * streak;
+    col *= 0.5 * exp(-floorY / max((uRes.y - base) * 0.45, 1.0));
   }
 
-  // ---- horizon glow: an ellipse of light, no hard line
-  float dy = (px.y - uBase) / 22.0;
-  float haze = exp(-dy * dy) * exp(-(x * x) / 0.18);
-  I += haze * 0.55;
-  heat = max(heat, haze);
-
-  // ---- colour: blue body, warming toward the core
-  vec3 cool = mix(NIGHT, DEEP, smoothstep(0.0, 0.25, I));
-  cool = mix(cool, BLUE, smoothstep(0.2, 0.6, I));
-  cool = mix(cool, SKY, smoothstep(0.8, 1.5, I));
-  // orange in the middle, turning coral toward the edges
-  vec3 edgeWarm = mix(WARM, vec3(0.98, 0.40, 0.38), smoothstep(0.25, 0.9, abs(x))) * 0.9;
-  vec3 warm = mix(edgeWarm, HOT, smoothstep(1.05, 1.9, I * (0.5 + coreHeat)));
-  // midnight blue -> lighter blue -> a touch of white -> orange
-  vec3 paleBlue = vec3(0.55, 0.74, 1.00);
-  // a luminous pale-blue column rising above the warm dome
-  float column = exp(-(x * x) / (2.0 * 0.16 * 0.16)) * smoothstep(0.85, 0.15, ay) * step(0.0, above);
-  cool = mix(cool, max(cool, vec3(0.60, 0.80, 1.00) * (0.6 + 0.4 * clamp(I, 0.0, 1.0))), column * 0.55);
-  vec3 white = vec3(0.96, 0.97, 1.00);
-  float lift = smoothstep(0.0, 0.3, heat) * step(0.0, above);
-  vec3 mid = mix(cool, max(cool, paleBlue * (0.5 + 0.5 * clamp(I, 0.0, 1.0))), lift * 0.4);
-  float glint = smoothstep(0.15, 0.4, heat) * (1.0 - smoothstep(0.4, 0.7, heat)) * step(0.0, above);
-  mid = mix(mid, white, glint * 0.22);
-  vec3 col = mix(mid, warm, smoothstep(0.15, 1.2, heat));
-  float alpha = clamp(I * 1.15, 0.0, 1.0);
+  // ---- a soft seam of light along the horizon
+  float dy = floorY / 18.0;
+  col += vec3(1.0, 0.72, 0.52) * exp(-dy * dy) * exp(-(x * x) / 0.5) * 0.35;
 
   // ---- stars in the dark sky
   vec2 sg = px / 34.0;
   vec2 sid = floor(sg);
   float sh = hash(sid);
-  if (sh > 0.93 && above > 0.25) {
+  if (sh > 0.93 && f < 0.3) {
     vec2 sp = fract(sg) - 0.5 - (vec2(hash(sid + 3.1), hash(sid + 7.7)) - 0.5) * 0.6;
     float tw = 0.5 + 0.5 * sin(t * (0.6 + sh * 2.0) + sh * 50.0);
-    float star = smoothstep(0.06, 0.0, length(sp)) * (0.25 + 0.55 * tw) * (1.0 - rise);
-    col = mix(col, HOT, star);
-    alpha = max(alpha, star);
+    col += vec3(smoothstep(0.06, 0.0, length(sp)) * (0.25 + 0.55 * tw));
   }
 
-  // ---- sparks: motes of light drifting up out of the core
-  if (uSparks > 0.0 && above > 0.0) {
-    vec2 g = px / 26.0;
-    float lane = floor(g.x);
-    g.y += t * (0.5 + hash(vec2(lane, 1.0)) * 0.9);
-    vec2 id = floor(g);
-    float h = hash(id + vec2(0.0, 31.0));
-    if (h > 1.0 - 0.06 * uSparks) {
-      vec2 f = fract(g) - 0.5 - (vec2(hash(id + 1.3), hash(id + 5.9)) - 0.5) * 0.5;
-      float m = smoothstep(0.09, 0.0, length(f)) * env * (1.0 - ay) * 0.9;
-      col = mix(col, h > 1.0 - 0.03 * uSparks ? WARM : SKY, m);
-      alpha = max(alpha, m);
-    }
-  }
-
-  gl_FragColor = vec4(col * alpha, alpha);
+  col = clamp(col, 0.0, 1.0);
+  float a = max(col.r, max(col.g, col.b));
+  gl_FragColor = vec4(col, a);
 }`;
 
 function compile(gl, type, src) {
@@ -240,8 +246,8 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
       const r = box.getBoundingClientRect();
       w = Math.max(1, Math.round(r.width));
       h = Math.max(1, Math.round(r.height));
-      // the field is soft, so it renders below device resolution
-      const scale = perf.lite ? 0.5 : Math.min(window.devicePixelRatio || 1, 2) * 0.6;
+      // the hairlines are fine, so render at device resolution (lite: 3/4)
+      const scale = perf.lite ? 0.75 : Math.min(window.devicePixelRatio || 1, 2);
       canvas.width = Math.max(1, Math.round(w * scale));
       canvas.height = Math.max(1, Math.round(h * scale));
       gl.viewport(0, 0, canvas.width, canvas.height);
