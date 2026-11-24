@@ -213,7 +213,19 @@ export default function GlassFolder({
               <div
                 className="gf-cover"
                 style={{ "--c-base": cover.base, "--c-glow": cover.glow, "--c-accent": cover.accent }}
-              />
+              >
+                {cover.art && (
+                  <img
+                    className="gf-cover-art"
+                    src={cover.art}
+                    alt=""
+                    draggable={false}
+                    loading="lazy"
+                    decoding="async"
+                    style={cover.artStyle}
+                  />
+                )}
+              </div>
             ) : image && (
               <img
                 className="gf-art"

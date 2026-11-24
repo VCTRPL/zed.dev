@@ -21,7 +21,10 @@ export const projects = [
     mark: "Xcar",
     status: "No ar",
     live: true,
-    cover: { base: "#0c0a0d", glow: "rgba(120, 10, 28, .75)", accent: "rgba(200, 206, 218, .5)" },
+    cover: {
+      art: "/work/covers/xcar.webp",
+      artStyle: { width: 140, left: 178, top: 4 },
+      base: "#0c0a0d", glow: "rgba(120, 10, 28, .75)", accent: "rgba(200, 206, 218, .5)" },
     href: "https://xcar-theta.vercel.app",
   },
   {
@@ -37,7 +40,10 @@ export const projects = [
     alt: "Seção da Oi Veículos com um carro esportivo azul em 3D",
     mark: "Oi",
     status: "Conceito",
-    cover: { base: "#2a0508", glow: "rgba(255, 45, 61, .95)", accent: "rgba(255, 140, 110, .5)" },
+    cover: {
+      art: "/work/covers/oi.webp",
+      artStyle: { width: 215, left: 140, top: 14 },
+      base: "#2a0508", glow: "rgba(255, 45, 61, .95)", accent: "rgba(255, 140, 110, .5)" },
     href: "https://oi-veiculos.vercel.app",
   },
   {
@@ -54,7 +60,10 @@ export const projects = [
     mark: "3D",
     status: "No ar",
     live: true,
-    cover: { base: "#14081c", glow: "rgba(255, 122, 61, .8)", accent: "rgba(176, 75, 214, .45)" },
+    cover: {
+      art: "/work/covers/portfolio.webp",
+      artStyle: { width: 116, left: 168, top: 2, mixBlendMode: "normal" },
+      base: "#14081c", glow: "rgba(255, 122, 61, .8)", accent: "rgba(176, 75, 214, .45)" },
     href: "https://vctrpl.vercel.app",
   },
 ];
