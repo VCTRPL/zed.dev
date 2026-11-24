@@ -26,6 +26,31 @@ function RoundButton({ dir, onClick, label }) {
   );
 }
 
+// The glass orb: a glint crosses it on hover, it sinks on press, and a click
+// sends a ripple out and a brief pulse through the light behind it.
+function OrbButton() {
+  const [ripples, setRipples] = useState([]);
+  const onClick = () => {
+    const id = Date.now();
+    setRipples((r) => [...r, id]);
+    window.dispatchEvent(new CustomEvent("zed:pulse"));
+  };
+  return (
+    <a href="#projetos" aria-label="Ver os projetos" className="orb" onClick={onClick}>
+      <span className="orb-glint" aria-hidden="true" />
+      <ZedMark className="orb-mark h-10 w-10 text-white" />
+      {ripples.map((id) => (
+        <span
+          key={id}
+          className="orb-ripple"
+          aria-hidden="true"
+          onAnimationEnd={() => setRipples((r) => r.filter((x) => x !== id))}
+        />
+      ))}
+    </a>
+  );
+}
+
 function ProjectSlot({ p, i, active, onActive }) {
   const ref = useRef(null);
   const [width, setWidth] = useState(320);
@@ -146,9 +171,7 @@ export default function Hero() {
           </div>
 
           <div className="enter mt-auto pb-6 pt-[clamp(14px,4.5svh,56px)]" style={delay(320)}>
-            <a href="#projetos" aria-label="Ver os projetos" className="orb press">
-              <ZedMark className="h-10 w-10 text-white" />
-            </a>
+            <OrbButton />
           </div>
         </div>
 

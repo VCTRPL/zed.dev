@@ -34,6 +34,7 @@ uniform float uBase;     // horizon, px from the top
 uniform float uSpread;
 uniform float uDensity;
 uniform float uSparks;
+uniform float uPulse;   // 1 right after a click on the orb, fading to 0
 
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
@@ -125,6 +126,10 @@ void main() {
   I += haze * 0.55;
   heat = max(heat, haze);
 
+  // a click on the orb sends a short surge through the warm core
+  I *= 1.0 + uPulse * 0.45 * (core + env * 0.4);
+  heat = clamp(heat + uPulse * core * 0.25, 0.0, 1.0);
+
   // ---- colour: blue body, warming toward the core
   vec3 cool = mix(NIGHT, DEEP, smoothstep(0.0, 0.25, I));
   cool = mix(cool, BLUE, smoothstep(0.2, 0.6, I));
@@ -212,6 +217,8 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
     const uSpread = u("uSpread");
     const uDensity = u("uDensity");
     const uSparks = u("uSparks");
+    const uPulse = u("uPulse");
+    let pulseAt = -1e9;
 
     const still = prefersReducedMotion();
     let w = 1;
@@ -242,6 +249,7 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
 
     const draw = (now) => {
       gl.uniform1f(uTime, still ? 12 : (now - t0) / 1000);
+      gl.uniform1f(uPulse, Math.exp(-Math.max(0, now - pulseAt) / 420));
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     };
 
@@ -278,6 +286,11 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
       if (visible) start();
     });
     io.observe(box);
+    const onPulse = () => {
+      pulseAt = performance.now();
+      if (still) draw(pulseAt);
+    };
+    window.addEventListener("zed:pulse", onPulse);
     const offLite = onLite(() => {
       layout();
       start();
@@ -288,6 +301,7 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
       ro.disconnect();
       io.disconnect();
       offLite();
+      window.removeEventListener("zed:pulse", onPulse);
       gl.deleteBuffer(buf);
       gl.deleteProgram(prog);
       gl.deleteShader(vs);
