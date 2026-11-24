@@ -23,7 +23,7 @@ export default function About() {
       <div className="mx-auto grid max-w-[1320px] items-center gap-12 px-5 md:px-8 lg:grid-cols-[1.1fr_1fr] lg:gap-16">
         <div>
           <SectionTitle id="sobre-h" eyebrow="Sobre">
-            Quem é o <em className="hot italic">zed</em>?
+            Quem é a <em className="hot italic">zed</em>?
           </SectionTitle>
 
           <div className="reveal mt-8 max-w-[58ch] space-y-5 text-[17px] leading-[1.7] text-[var(--zed-ink)]/85 md:text-[18px]">
