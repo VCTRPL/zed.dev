@@ -133,10 +133,13 @@ void main() {
   // orange in the middle, turning coral toward the edges
   vec3 edgeWarm = mix(WARM, vec3(0.98, 0.40, 0.38), smoothstep(0.25, 0.9, abs(x))) * 0.9;
   vec3 warm = mix(edgeWarm, HOT, smoothstep(1.05, 1.9, I * (0.5 + coreHeat)));
-  // blue melts into warm through a soft lavender-rose, like a sunset gradient
-  vec3 rose = mix(vec3(0.70, 0.72, 1.00), vec3(1.00, 0.72, 0.66), smoothstep(0.2, 0.6, heat));
-  float roseAmt = smoothstep(0.0, 0.45, heat) * 0.6 * step(0.0, above);
-  vec3 mid = mix(cool, max(cool, rose * (0.5 + 0.5 * clamp(I, 0.0, 1.0))), roseAmt);
+  // midnight blue -> lighter blue -> a touch of white -> orange
+  vec3 paleBlue = vec3(0.55, 0.74, 1.00);
+  vec3 white = vec3(0.96, 0.97, 1.00);
+  float lift = smoothstep(0.0, 0.3, heat) * step(0.0, above);
+  vec3 mid = mix(cool, max(cool, paleBlue * (0.55 + 0.45 * clamp(I, 0.0, 1.0))), lift * 0.7);
+  float glint = smoothstep(0.15, 0.4, heat) * (1.0 - smoothstep(0.4, 0.7, heat)) * step(0.0, above);
+  mid = mix(mid, white, glint * 0.55);
   vec3 col = mix(mid, warm, smoothstep(0.3, 0.95, heat));
   float alpha = clamp(I * 1.15, 0.0, 1.0);
 
