@@ -18,10 +18,10 @@ export const projects = [
       ["Veículos", "Fichas", "/work/xcar-3.webp"],
     ],
     alt: "Página inicial da XCAR Veículos com a logo vermelha em 3D",
-    mark: "XC",
+    mark: "Xcar",
     status: "No ar",
     live: true,
-    cover: { base: "#1c0608", glow: "rgba(226, 36, 47, .85)", accent: "rgba(255, 120, 90, .35)" },
+    cover: { base: "#0c0a0d", glow: "rgba(120, 10, 28, .75)", accent: "rgba(200, 206, 218, .5)" },
     href: "https://xcar-theta.vercel.app",
   },
   {
@@ -37,7 +37,7 @@ export const projects = [
     alt: "Seção da Oi Veículos com um carro esportivo azul em 3D",
     mark: "Oi",
     status: "Conceito",
-    cover: { base: "#050c22", glow: "rgba(47, 107, 255, .85)", accent: "rgba(128, 176, 255, .35)" },
+    cover: { base: "#2a0508", glow: "rgba(255, 45, 61, .95)", accent: "rgba(255, 140, 110, .5)" },
     href: "https://oi-veiculos.vercel.app",
   },
   {

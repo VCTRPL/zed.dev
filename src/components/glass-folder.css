@@ -94,12 +94,14 @@
 /* the project's initials on the folder tab */
 .gf-mark {
   position: absolute;
-  right: 26px;
-  top: 12px;
-  font-family: var(--font-serif, Georgia, serif);
-  font-size: 44px;
+  right: 24px;
+  top: 16px;
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-size: 34px;
+  font-weight: 650;
+  font-stretch: 85%;
   line-height: 1;
-  letter-spacing: -.02em;
+  letter-spacing: -.035em;
   color: rgba(255, 255, 255, .9);
   text-shadow: 0 0 22px var(--c-glow, rgba(255, 164, 99, .6)), 0 1px 0 rgba(0, 0, 0, .25);
   transform: translate(calc(var(--gf-px) * -4px), calc(var(--gf-py) * -3px));
