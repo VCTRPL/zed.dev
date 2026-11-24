@@ -258,10 +258,10 @@ body:after {
   /* clear glass: the light behind shows through, softly blurred */
   /* frosted white glass: a light blur and a white veil, never grey */
   background:
-    radial-gradient(100% 55% at 50% 0%, rgb(255 255 255 / 0.65), transparent 62%),
-    radial-gradient(70% 40% at 50% 100%, rgb(255 255 255 / 0.35), transparent 70%),
-    radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.18), rgb(255 255 255 / 0.3) 100%),
-    rgb(255 255 255 / 0.12);
+    radial-gradient(100% 55% at 50% 0%, rgb(255 255 255 / 0.56), transparent 62%),
+    radial-gradient(70% 40% at 50% 100%, rgb(255 255 255 / 0.28), transparent 70%),
+    radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.18) 100%),
+    rgb(255 255 255 / 0.08);
   border: 1px solid rgb(255 255 255 / 0.7);
   -webkit-backdrop-filter: blur(8px) brightness(1.15) saturate(130%);
   backdrop-filter: blur(8px) brightness(1.15) saturate(130%);
