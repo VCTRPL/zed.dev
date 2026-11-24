@@ -70,15 +70,15 @@ export default function Hero() {
     <section id="top" className="relative isolate overflow-hidden" aria-labelledby="hero-h">
       <div aria-hidden="true" className="absolute inset-x-0 top-0 -z-10 h-[calc(100svh+340px)]">
         <LightField density={2.4} />
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,var(--zed-black)_0%,rgb(11_13_18/.35)_10%,transparent_24%,transparent_72%,var(--zed-black)_100%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(130%_90%_at_50%_45%,transparent_60%,rgb(11_13_18/.3)_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,var(--zed-black)_0%,rgb(11_13_18/.55)_14%,transparent_32%,transparent_70%,var(--zed-black)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_50%_40%,transparent_55%,rgb(11_13_18/.75)_100%)]" />
       </div>
 
       <div className="relative mx-auto max-w-[1320px] px-5 md:px-8">
         <div className="hero-out relative flex min-h-[86svh] flex-col items-center pt-[clamp(84px,13svh,112px)] text-center md:pt-[clamp(88px,13svh,144px)]">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute left-1/2 top-[18%] -z-10 h-[52%] w-[min(900px,100%)] -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_50%,rgb(11_13_18/.3),rgb(11_13_18/.12)_55%,transparent_80%)]"
+            className="pointer-events-none absolute left-1/2 top-[18%] -z-10 h-[52%] w-[min(900px,100%)] -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_50%,rgb(11_13_18/.62),rgb(11_13_18/.3)_55%,transparent_80%)]"
           />
           <div className="absolute left-0 top-40 hidden flex-col gap-10 text-left xl:flex">
             <Stat n="4" label="projetos no ar" wait={420} />
