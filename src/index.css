@@ -271,22 +271,7 @@ body:after {
   animation: orb-frost 7s ease-in-out 1.4s infinite;
 }
 @keyframes orb-frost {
-  0%,
-  100% {
-    background-color: rgb(255 255 255 / 0.06);
-    -webkit-backdrop-filter: blur(0px) brightness(1);
-    backdrop-filter: blur(0px) brightness(1);
-  }
-  50% {
-    background-color: rgb(255 255 255 / 0.16);
-    -webkit-backdrop-filter: blur(8px) brightness(1.15);
-    backdrop-filter: blur(8px) brightness(1.15);
-  }
-}
-.lite .orb {
-  animation-name: orb-frost-lite;
-}
-@keyframes orb-frost-lite {
+  /* only the veil animates: animating a backdrop blur repaints on every frame */
   0%,
   100% {
     background-color: rgb(255 255 255 / 0.06);
@@ -763,6 +748,12 @@ body:after {
   }
   .scroll-progress {
     display: none !important;
+  }
+}
+/* phones: the full-screen blended grain makes the browser recomposite on every scrolled pixel */
+@media (pointer: coarse) {
+  body:after {
+    display: none;
   }
 }
 .lite body:after {

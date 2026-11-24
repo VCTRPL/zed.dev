@@ -49,7 +49,8 @@ float noise(vec2 p) {
 }
 float fbm(vec2 p) {
   float v = 0.0, a = 0.5;
-  for (int i = 0; i < 4; i++) { v += a * noise(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; }
+  // 3 octaves: the 4th added detail too fine to see at this resolution
+  for (int i = 0; i < 3; i++) { v += a * noise(p); p = p * 2.03 + vec2(1.7, 9.2); a *= 0.5; }
   return v;
 }
 
@@ -235,7 +236,7 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
       w = Math.max(1, Math.round(r.width));
       h = Math.max(1, Math.round(r.height));
       // the field is soft, so it renders below device resolution
-      const scale = perf.lite ? 0.5 : Math.min(window.devicePixelRatio || 1, 2) * 0.6;
+      const scale = perf.lite ? 0.4 : Math.min(window.devicePixelRatio || 1, 2) * 0.45;
       canvas.width = Math.max(1, Math.round(w * scale));
       canvas.height = Math.max(1, Math.round(h * scale));
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -256,7 +257,8 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
     const tick = (now) => {
       raf = 0;
       if (!visible) return;
-      if (perf.lite && now - prev < 32) {
+      // ~30 fps on lite devices and while the page is scrolling, so scrolling stays smooth
+      if ((perf.lite || now - lastScroll < 200) && now - prev < 32) {
         raf = requestAnimationFrame(tick); // ~30 fps on lite
         return;
       }
@@ -281,6 +283,11 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
       draw(performance.now());
     });
     ro.observe(box);
+    let lastScroll = -1e9;
+    const onScroll = () => {
+      lastScroll = performance.now();
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
     const io = new IntersectionObserver(([e]) => {
       visible = e ? e.isIntersecting : true;
       if (visible) start();
@@ -302,6 +309,7 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
       io.disconnect();
       offLite();
       window.removeEventListener("zed:pulse", onPulse);
+      window.removeEventListener("scroll", onScroll);
       gl.deleteBuffer(buf);
       gl.deleteProgram(prog);
       gl.deleteShader(vs);
