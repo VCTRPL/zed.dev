@@ -99,19 +99,19 @@ void main() {
   // ---- warm core: a soft flame-shaped glow just above the horizon
   float ay = max(above, 0.0);
   // a dome: wide at the horizon with a rounded top
-  float flame = exp(-pow((x * x) / 0.09 + (ay * ay) / 0.14, 1.4)) * step(0.0, above);
+  float flame = exp(-pow((x * x) / 0.1 + (ay * ay) / 0.16, 1.05)) * step(0.0, above);
   // a warm band hugging the horizon
   float band = exp(-ay / 0.07 - (x * x) / 0.4) * step(0.0, above);
   // warm shoulders: the glow spills out to the sides, tall in the middle and
   // sloping down toward the edges, hugging the horizon at the far ends
   float shoulder = 0.24 + 0.26 * exp(-(x * x) / 0.25);
-  float skirt = exp(-pow(ay / shoulder, 1.3)) * (0.7 + 0.3 * exp(-(x * x) / 0.7)) * step(0.0, above);
+  float skirt = exp(-pow(ay / shoulder, 1.1)) * (0.7 + 0.3 * exp(-(x * x) / 0.7)) * step(0.0, above);
   float coreHeat = clamp(flame * 1.0 + band * 0.75, 0.0, 1.0); // drives the white-hot centre
-  float heat = clamp(coreHeat + skirt * 0.9, 0.0, 1.0);
-  I += skirt * 0.22; // the warm shoulders glow on their own
+  float heat = clamp(coreHeat + skirt * 0.75, 0.0, 1.0);
+  I += skirt * 0.12; // the warm shoulders glow on their own
   I += flame * 0.22 + band * 0.12;
   // the warm light is a soft glow, not striated
-  I = mix(I, smoothI * 0.85 + flame * 0.18 + band * 0.1, heat * 0.6);
+  I = mix(I, smoothI * 0.85 + flame * 0.18 + band * 0.1, heat * 0.8);
 
   // ---- reflection below the horizon
   if (above < 0.0) {
@@ -135,12 +135,15 @@ void main() {
   vec3 warm = mix(edgeWarm, HOT, smoothstep(1.05, 1.9, I * (0.5 + coreHeat)));
   // midnight blue -> lighter blue -> a touch of white -> orange
   vec3 paleBlue = vec3(0.55, 0.74, 1.00);
+  // a luminous pale-blue column rising above the warm dome
+  float column = exp(-(x * x) / (2.0 * 0.16 * 0.16)) * smoothstep(0.85, 0.15, ay) * step(0.0, above);
+  cool = mix(cool, max(cool, vec3(0.60, 0.80, 1.00) * (0.6 + 0.4 * clamp(I, 0.0, 1.0))), column * 0.55);
   vec3 white = vec3(0.96, 0.97, 1.00);
   float lift = smoothstep(0.0, 0.3, heat) * step(0.0, above);
-  vec3 mid = mix(cool, max(cool, paleBlue * (0.55 + 0.45 * clamp(I, 0.0, 1.0))), lift * 0.7);
+  vec3 mid = mix(cool, max(cool, paleBlue * (0.5 + 0.5 * clamp(I, 0.0, 1.0))), lift * 0.4);
   float glint = smoothstep(0.15, 0.4, heat) * (1.0 - smoothstep(0.4, 0.7, heat)) * step(0.0, above);
-  mid = mix(mid, white, glint * 0.55);
-  vec3 col = mix(mid, warm, smoothstep(0.3, 0.95, heat));
+  mid = mix(mid, white, glint * 0.22);
+  vec3 col = mix(mid, warm, smoothstep(0.15, 1.2, heat));
   float alpha = clamp(I * 1.15, 0.0, 1.0);
 
   // ---- stars in the dark sky
