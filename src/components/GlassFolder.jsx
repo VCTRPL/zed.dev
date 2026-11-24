@@ -55,6 +55,9 @@ export default function GlassFolder({
   tone = "dark",
   image,
   cover,
+  mark,
+  status,
+  live = false,
   files = [],
   action = "more",
   menu = [],
@@ -224,6 +227,13 @@ export default function GlassFolder({
               />
             )}
             <div className="gf-back-sheen" />
+            {mark && <span className="gf-mark">{mark}</span>}
+            {status && (
+              <span className="gf-status" data-live={live || undefined}>
+                <i aria-hidden="true" />
+                {status}
+              </span>
+            )}
           </div>
           <svg className="gf-rim gf-back-rim" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
             <path d={BACK_PATH} />
@@ -247,7 +257,7 @@ export default function GlassFolder({
               type="button"
               className="gf-hit"
               aria-expanded={open}
-              aria-label={(open ? "Fechar " : "Abrir ") + label + ", " + countLabel(files.length)}
+              aria-label={(open ? "Fechar " : "Abrir ") + label + (status ? ", " + status : "") + ", " + countLabel(files.length)}
               onClick={() => {
                 setMenuOpen(false);
                 toggle(!open);
