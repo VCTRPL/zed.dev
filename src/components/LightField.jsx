@@ -231,6 +231,10 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
     let spent = 0;
     const t0 = performance.now();
 
+    // the look (density, sparks) is chosen once; if the page is demoted to
+    // lite later, only the resolution drops, so the light doesn't jump
+    const liteLook = perf.lite;
+
     const layout = () => {
       const r = box.getBoundingClientRect();
       w = Math.max(1, Math.round(r.width));
@@ -246,8 +250,8 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
       gl.uniform2f(uRes, w, h);
       gl.uniform1f(uBase, base);
       gl.uniform1f(uSpread, spread ?? (w < 640 ? 0.62 : 0.46));
-      gl.uniform1f(uDensity, perf.lite ? Math.min(density, 1.6) : density);
-      gl.uniform1f(uSparks, sparks * (perf.lite ? 0.5 : 1));
+      gl.uniform1f(uDensity, liteLook ? Math.min(density, 1.6) : density);
+      gl.uniform1f(uSparks, sparks * (liteLook ? 0.5 : 1));
     };
 
     const draw = (now) => {
@@ -264,9 +268,11 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
         raf = requestAnimationFrame(tick);
         return;
       }
+      // frames are paced to ~30 fps on purpose, so only demote a device that
+      // can't even keep ~20 fps
       if (!perf.lite && prev && frames < 120) {
         spent += now - prev;
-        if (++frames === 120 && spent / 120 > 1000 / 35) goLite();
+        if (++frames === 120 && spent / 120 > 1000 / 20) goLite();
       }
       prev = now;
       draw(now);
