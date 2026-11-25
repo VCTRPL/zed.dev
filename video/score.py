@@ -9,7 +9,7 @@ import numpy as np
 
 SR = 44100
 FPS = 30
-DUR = 1140 / FPS + 0.5
+DUR = 1250 / FPS + 0.3
 N = int(SR * DUR)
 t = np.arange(N) / SR
 rng = np.random.default_rng(7)
@@ -62,8 +62,10 @@ def add(sig, gain=1.0, pan=0.0):
 
 BEAT = 60 / 120
 DROP = sec(140)          # the orange dot lands
-PULL = sec(985)          # the beat drops out before the CTA
+PULL = sec(964)          # the beat drops out before the CTA
 CLICK = sec(1062)        # the orb click
+END = sec(1128)          # the orb lands as the profile picture
+ZOOM = sec(214)          # the camera passes through the Z
 
 # ---- pad: four chords, detuned saws, softly filtered
 chords = [[50, 57, 62, 66, 69, 76], [47, 54, 61, 62, 66, 73], [43, 50, 57, 59, 62, 71], [45, 52, 57, 61, 64, 69]]
@@ -137,7 +139,16 @@ def impact(at, gain=1.0):
 
 
 impact(DROP)
-impact(CLICK, 0.9)
+impact(CLICK, 0.55)
+impact(END, 1.0)
+# the dive through the Z: a long rising whoosh and a soft hit on the far side
+zw = np.clip((t - (ZOOM - 1.1)) / 1.1, 0, 1) ** 3 * (t < ZOOM + 0.3) * np.exp(-np.clip(t - ZOOM, 0, None) / 0.12)
+add(bandpass(noise, 300, 9000) * zw, 0.32)
+kick(ZOOM, 1.1)
+add(bandpass(noise, 3000, 14000) * env(ZOOM, 0.002, 0.5), 0.1)
+# the riser into the avatar
+r3 = np.clip((t - (END - 1.6)) / 1.6, 0, 1) ** 2.5 * (t < END)
+add(bandpass(noise, 800, 8000) * r3, 0.16)
 
 # ---- the pulse: soft kick on the beat, hats off the beat in the projects part
 for i, kt in enumerate(kick_times):
@@ -148,11 +159,11 @@ for kt in np.arange(sec(345), PULL, BEAT):
     add(h, 0.09, 0.3)
     if int((kt - sec(345)) / BEAT) % 2:
         add(hat_src * env(kt + BEAT * 0.75, 0.001, 0.02, 0.08), 0.05, -0.3)
-for kt in np.arange(CLICK, DUR - 1, BEAT):
-    kick(kt, 0.45)
+for kt in np.arange(END, DUR - 1.2, BEAT):
+    kick(kt, 0.4)
 
 # ---- whooshes into each cut
-cuts = [198, 345, 456, 560, 658, 792, 908, 978]
+cuts = [345, 456, 560, 666, 800, 916, 986]
 for c in cuts:
     end = sec(c) + 0.12
     start = end - 0.55

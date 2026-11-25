@@ -1,38 +1,44 @@
 import { AbsoluteFill, Audio, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import LightCanvas from "./LightCanvas";
+import { Shot, ZRim, Z_PATH, zMask, zXform } from "./z";
 import { Arrow, C, Eyebrow, Hot, MONO, Rise, SANS, SERIF, Words, ZedMark, btnPrimary, easeIn, easeInOut, easeOut, glass, io, lerp } from "./kit";
 
 // ---- timeline (frames @ 30fps) ----
 export const T = {
   intro: [0, 105],
-  logo: [95, 205],
-  head: [198, 352],
-  proj: [345, 665],
-  serv: [658, 800],
-  proc: [792, 915],
-  stack: [908, 985],
-  cta: [978, 1140],
+  logo: [95, 216],
+  head: [184, 352],
+  proj: [345, 666],
+  serv: [644, 800],
+  proc: [778, 916],
+  stack: [894, 986],
+  cta: [964, 1250],
 };
-export const DURATION = 1140;
+export const DURATION = 1250;
 const on = (f, [a, b]) => f >= a && f < b;
 const LOGO_DOT = 140;
 const CLICK = 1062;
+const END = 1124; // the orb lands as the profile picture
+const AVATAR_Y = 760; // its centre
 
 // ---------------------------------------------------------------- background
 function Background() {
   const f = useCurrentFrame();
   const k = (pts) =>
     interpolate(f, pts.map((p) => p[0]), pts.map((p) => p[1]), { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeInOut });
-  const horizon = k([[0, 0.6], [180, 0.6], [240, 0.84], [345, 0.84], [380, 0.97], [640, 0.97], [700, 0.99], [900, 0.99], [990, 0.78]]);
-  const gain = k([[0, 0], [8, 0.9], [200, 1], [345, 1], [380, 0.55], [640, 0.55], [700, 0.42], [960, 0.5], [1000, 1]]);
-  const rise = k([[0, 0.002], [12, 0.002], [80, 1.05], [345, 1.05], [380, 0.75], [920, 0.75], [1010, 1.15]]);
+  const horizon = k([[0, 0.6], [180, 0.6], [240, 0.84], [345, 0.84], [380, 0.97], [640, 0.97], [700, 0.99], [900, 0.99], [990, 0.78], [END - 24, 0.78], [END + 6, 0.6]]);
+  const gain = k([[0, 0], [8, 0.9], [200, 1], [345, 1], [380, 0.55], [640, 0.55], [700, 0.42], [960, 0.5], [1000, 1], [END - 24, 1], [END + 6, 0.9]]);
+  const rise = k([[0, 0.002], [12, 0.002], [80, 1.05], [345, 1.05], [380, 0.75], [920, 0.75], [1010, 1.15], [END - 24, 1.15], [END + 6, 0.8]]);
   const pulse = Math.max(
     f >= LOGO_DOT ? Math.exp(-(f - LOGO_DOT) / 12) : 0,
     f >= CLICK ? Math.exp(-(f - CLICK) / 13) : 0,
     f >= 342 && f < 400 ? 0.5 * Math.exp(-(f - 342) / 10) : 0,
+    f >= END + 4 ? 0.9 * Math.exp(-(f - END - 4) / 14) : 0,
+    f >= 650 && f < 700 ? 0.4 * Math.exp(-(f - 660) / 10) * (f >= 660) : 0,
+    f >= 980 && f < 1030 ? 0.4 * Math.exp(-(f - 986) / 10) * (f >= 986) : 0,
   );
   // a slow push-in so the frame is never still
-  const zoom = 1 + 0.06 * io(f, 0, 200) - 0.03 * io(f, 330, 400) + 0.05 * io(f, 980, 1140, easeInOut);
+  const zoom = 1 + 0.06 * io(f, 0, 200) - 0.03 * io(f, 330, 400) + 0.05 * io(f, 980, 1100, easeInOut) - 0.05 * io(f, END - 24, END + 6, easeInOut) + 0.04 * io(f, END, DURATION);
   return (
     <AbsoluteFill style={{ background: C.black }}>
       <AbsoluteFill style={{ transform: `scale(${zoom})` }}>
@@ -86,44 +92,72 @@ function Intro() {
 }
 
 // -------------------------------------------------------------------- logo
+// The Z is drawn, its dot lands, then the Z turns into a window onto the
+// light and the camera dives through it into the headline.
+const ZOOM_A = 184;
+const ZOOM_B = 214;
 function Logo() {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
   const draw = io(f, 100, 136, easeInOut);
-  const dot = spring({ frame: f - LOGO_DOT, fps, config: { damping: 9, stiffness: 160 } });
+  const dot = Math.max(0, spring({ frame: f - LOGO_DOT, fps, config: { damping: 9, stiffness: 160 } }));
   const ring = io(f, LOGO_DOT, LOGO_DOT + 34);
-  const out = io(f, 190, 205, easeIn);
+  const zt = io(f, ZOOM_A, ZOOM_B, easeIn);
+  const s = 0.82 * Math.exp(Math.log(90) * zt);
+  const cx = lerp(io(f, ZOOM_A - 8, ZOOM_B, easeInOut), 520, 540);
+  const cy = lerp(io(f, ZOOM_A - 8, ZOOM_B, easeInOut), 610, 960);
+  const rot = -10 * io(f, ZOOM_A - 4, ZOOM_B, easeInOut);
+  const xf = zXform(cx, cy, s, rot);
+  const window_ = io(f, 172, 190); // the Z goes from white ink to a window
+  const tail = io(f, ZOOM_B - 4, ZOOM_B);
+  // where the dot sits on screen (it rides the same transform until it fades)
+  const dotOpacity = 1 - io(f, ZOOM_A, ZOOM_A + 8);
   return (
-    <AbsoluteFill style={{ opacity: 1 - out, transform: `scale(${1 + out * 0.35})`, filter: `blur(${out * 18}px)` }}>
-      <div style={{ position: "absolute", left: -100, right: -100, top: 330, height: 1000, opacity: io(f, 140, 170), background: "radial-gradient(50% 50% at 50% 55%, rgb(11 13 18 / .78), rgb(11 13 18 / .4) 55%, transparent 80%)" }} />
-      <div style={{ position: "absolute", top: 400, left: 0, right: 0, display: "flex", justifyContent: "center" }}>
-        <div style={{ position: "relative" }}>
-          <ZedMark size={420} draw={draw} dot={Math.max(0, dot)} />
-          {/* the orb's ripple, out of the dot */}
-          <div
-            style={{
-              position: "absolute",
-              left: (414 - 22) * (420 / 512) - 90,
-              top: (333 + 4) * (420 / 512) - 90,
-              width: 180,
-              height: 180,
-              borderRadius: "50%",
-              border: "3px solid rgb(255 214 180 / .9)",
-              transform: `scale(${0.2 + ring * 3.2})`,
-              opacity: f >= LOGO_DOT ? (1 - ring) * 0.9 : 0,
-            }}
-          />
-        </div>
-      </div>
+    <AbsoluteFill>
+      <div style={{ position: "absolute", left: -100, right: -100, top: 230, height: 1000, opacity: io(f, 140, 170) * (1 - window_), background: "radial-gradient(50% 50% at 50% 55%, rgb(11 13 18 / .78), rgb(11 13 18 / .4) 55%, transparent 80%)" }} />
+      {/* everything but the Z goes dark */}
+      <AbsoluteFill style={{ background: C.black, opacity: window_ * (1 - tail), ...zMask(xf, true) }} />
+      <ZRim xf={[cx, cy]} s={{ s, rot }} opacity={window_ * (1 - tail) * 0.9} />
+      <AbsoluteFill>
+        <svg width="1080" height="1920" viewBox="0 0 1080 1920" style={{ overflow: "visible" }}>
+          <g transform={xf}>
+            <path
+              d={Z_PATH}
+              fill="none"
+              stroke="#fff"
+              strokeWidth="58"
+              strokeLinecap="square"
+              strokeDasharray="760"
+              strokeDashoffset={760 * (1 - draw)}
+              opacity={1 - window_}
+            />
+            <circle cx="392" cy="337" r={33 * dot} fill={C.orange} opacity={dotOpacity} style={{ filter: `drop-shadow(0 0 ${30 * dot}px rgb(255 164 99))` }} />
+          </g>
+        </svg>
+      </AbsoluteFill>
+      {/* the orb's ripple, out of the dot */}
+      <div
+        style={{
+          position: "absolute",
+          left: 520 + (392 - 228) * 0.82 - 90,
+          top: 610 + (337 - 260) * 0.82 - 90,
+          width: 180,
+          height: 180,
+          borderRadius: "50%",
+          border: "3px solid rgb(255 214 180 / .9)",
+          transform: `scale(${0.2 + ring * 3.2})`,
+          opacity: f >= LOGO_DOT ? (1 - ring) * 0.9 : 0,
+        }}
+      />
       <div style={{ position: "absolute", top: 860, width: "100%", textAlign: "center", textShadow: "0 4px 40px rgb(11 13 18 / .9)" }}>
         <div style={{ fontFamily: SANS, fontWeight: 500, fontSize: 150, letterSpacing: "-0.04em", color: "#fff" }}>
           {"zed.dev".split("").map((ch, i) => (
-            <Rise key={i} as="span" at={146 + i * 3} dur={18} y={50} style={{ display: "inline-block", color: i >= 3 ? C.muted : "#fff" }}>
+            <Rise key={i} as="span" at={146 + i * 3} dur={18} y={50} out={170 + i * 1.5} outDur={12} style={{ display: "inline-block", color: i >= 3 ? C.muted : "#fff" }}>
               {ch}
             </Rise>
           ))}
         </div>
-        <Rise at={166} dur={22}>
+        <Rise at={160} dur={20} out={170} outDur={12}>
           <p style={{ fontFamily: MONO, fontSize: 30, letterSpacing: ".18em", color: C.ink, opacity: 0.8, textTransform: "uppercase", margin: "26px 0 0" }}>
             Estúdio de desenvolvimento web
           </p>
@@ -282,7 +316,7 @@ function Project({ p, i }) {
   const s = P0 + i * PLEN;
   const t = (f - s) / PLEN;
   const inT = i === 0 ? io(f, s - 6, s + 22) : io(f, s - 8, s + 18, easeOut);
-  const outT = i === PROJECTS.length - 1 ? io(f, T.proj[1] - 18, T.proj[1], easeIn) : io(f, s + PLEN - 10, s + PLEN + 10, easeInOut);
+  const outT = i === PROJECTS.length - 1 ? 0 : io(f, s + PLEN - 10, s + PLEN + 10, easeInOut);
   if (inT <= 0 || outT >= 1) return null;
   // phones swap like cards on a carousel
   const x = (1 - inT) * 700 - outT * 700;
@@ -344,7 +378,7 @@ function Project({ p, i }) {
         </div>
       </div>
       <div style={{ position: "absolute", top: 1520, left: 70, right: 70 }}>
-        <Rise at={s + 6} dur={18} out={i === PROJECTS.length - 1 ? T.proj[1] - 18 : s + PLEN - 10} outDur={12} y={40}>
+        <Rise at={s + 6} dur={18} out={i === PROJECTS.length - 1 ? undefined : s + PLEN - 10} outDur={12} y={40}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <h2 style={{ fontFamily: SERIF, fontWeight: 400, fontSize: 108, color: "#fff", margin: 0, letterSpacing: "-0.02em" }}>{p.name}</h2>
             <span style={{ ...glass, display: "inline-flex", alignItems: "center", gap: 12, padding: "12px 24px", borderRadius: 99, fontFamily: MONO, fontSize: 24, letterSpacing: ".12em", textTransform: "uppercase", color: C.ink }}>
@@ -353,7 +387,7 @@ function Project({ p, i }) {
             </span>
           </div>
         </Rise>
-        <Rise at={s + 12} dur={18} out={i === PROJECTS.length - 1 ? T.proj[1] - 18 : s + PLEN - 10} outDur={12} y={30}>
+        <Rise at={s + 12} dur={18} out={i === PROJECTS.length - 1 ? undefined : s + PLEN - 10} outDur={12} y={30}>
           <p style={{ fontFamily: MONO, fontSize: 28, letterSpacing: ".14em", textTransform: "uppercase", color: C.orange, margin: "18px 0 0" }}>{p.tag}</p>
           <p style={{ fontFamily: SANS, fontSize: 36, lineHeight: 1.4, color: C.ink, opacity: 0.85, margin: "14px 0 0" }}>{p.line}</p>
         </Rise>
@@ -365,7 +399,7 @@ function Project({ p, i }) {
 function Projects() {
   const f = useCurrentFrame();
   const idx = Math.min(PROJECTS.length - 1, Math.max(0, Math.floor((f - P0 + 4) / PLEN)));
-  const head = io(f, T.proj[0] + 8, T.proj[0] + 28) * (1 - io(f, T.proj[1] - 16, T.proj[1]));
+  const head = io(f, T.proj[0] + 8, T.proj[0] + 28);
   return (
     <AbsoluteFill>
       {PROJECTS.map((p, i) => (
@@ -397,14 +431,14 @@ function Services() {
   return (
     <AbsoluteFill>
       <div style={{ position: "absolute", top: 230, left: 70, right: 70 }}>
-        <Rise at={a + 4} out={end - 22}>
+        <Rise at={a + 4}>
           <Eyebrow>Serviços</Eyebrow>
         </Rise>
         <h2 style={{ fontFamily: SERIF, fontWeight: 400, fontSize: 128, lineHeight: 1, letterSpacing: "-0.02em", color: "#fff", margin: "36px 0 0" }}>
-          <Words text="Quatro serviços," at={a + 8} out={end - 22} />
+          <Words text="Quatro serviços," at={a + 8} />
           <br />
-          <Words text="um só" at={a + 20} out={end - 20} />{" "}
-          <Rise as="span" at={a + 30} out={end - 20} style={{ display: "inline-block" }}>
+          <Words text="um só" at={a + 20} />{" "}
+          <Rise as="span" at={a + 30} style={{ display: "inline-block" }}>
             <Hot>responsável</Hot>.
           </Rise>
         </h2>
@@ -412,7 +446,7 @@ function Services() {
       <div style={{ position: "absolute", top: 760, left: 70, right: 70, display: "flex", flexDirection: "column", gap: 28, perspective: 1800 }}>
         {SERVICES.map(([icon, title, line, invert], i) => {
           const t = io(f, a + 26 + i * 9, a + 52 + i * 9);
-          const o = io(f, end - 26 + i * 3, end - 8 + i * 3, easeIn);
+          const o = 0;
           const sweep = io(f, a + 40 + i * 9, a + 90 + i * 9, easeInOut);
           return (
             <div
@@ -463,7 +497,7 @@ function Process() {
   const top = 820;
   const gap = 230;
   const travel = io(f, a + 22, a + 92, easeInOut);
-  const out = io(f, end - 16, end, easeIn);
+  const out = 0;
   return (
     <AbsoluteFill style={{ opacity: 1 - out, filter: `blur(${out * 12}px)` }}>
       <div style={{ position: "absolute", top: 250, left: 70, right: 70 }}>
@@ -529,7 +563,7 @@ function Stack() {
   const { fps } = useVideoConfig();
   const a = T.stack[0];
   const end = T.stack[1];
-  const out = io(f, end - 14, end, easeIn);
+  const out = 0;
   return (
     <AbsoluteFill style={{ opacity: 1 - out, transform: `scale(${1 + out * 0.2})`, filter: `blur(${out * 14}px)` }}>
       <div style={{ position: "absolute", top: 470, width: "100%", textAlign: "center" }}>
@@ -557,7 +591,7 @@ function Stack() {
 }
 
 // --------------------------------------------------------------------- cta
-function Orb({ press }) {
+function Orb({ press, dot = 1, glow = 0 }) {
   return (
     <div
       style={{
@@ -573,9 +607,10 @@ function Orb({ press }) {
         boxShadow: "inset 0 2px 5px rgb(255 255 255 / .9), inset 0 0 40px rgb(255 255 255 / .25), 0 0 70px rgb(255 255 255 / .25), 0 0 140px rgb(255 200 160 / .25)",
         backdropFilter: "blur(10px)",
         transform: `scale(${1 - press * 0.07})`,
+        filter: glow ? `drop-shadow(0 0 ${glow * 60}px rgb(255 190 140 / ${glow * 0.8}))` : undefined,
       }}
     >
-      <ZedMark size={110} />
+      <ZedMark size={110} dot={dot} />
     </div>
   );
 }
@@ -586,10 +621,17 @@ function Cta() {
   const press = io(f, CLICK - 6, CLICK) - io(f, CLICK, CLICK + 10);
   const rip = io(f, CLICK, CLICK + 40);
   const rip2 = io(f, CLICK + 8, CLICK + 52);
-  const fadeEnd = io(f, DURATION - 10, DURATION);
+  const { fps } = useVideoConfig();
+  const fadeEnd = io(f, DURATION - 12, DURATION);
+  // after the click everything clears and the orb becomes the profile picture
+  const leave = io(f, END - 26, END - 8, easeIn);
+  const grow = io(f, END - 22, END + 8, easeInOut);
+  const pop = f < END + 4 ? 1 : Math.max(0, spring({ frame: f - END - 4, fps, config: { damping: 8, stiffness: 170 } }));
+  const glow = io(f, END + 2, END + 10) * (1 - io(f, END + 10, END + 50));
+  const leaving = { opacity: 1 - leave, filter: `blur(${leave * 16}px)`, transform: `translateY(${-leave * 80}px) scale(${1 - leave * 0.06})` };
   return (
     <AbsoluteFill style={{ opacity: 1 - fadeEnd }}>
-      <div style={{ position: "absolute", top: 290, left: 60, right: 60, textAlign: "center" }}>
+      <div style={{ position: "absolute", top: 290, left: 60, right: 60, textAlign: "center", ...leaving }}>
         <Rise at={a + 6}>
           <Eyebrow style={{ justifyContent: "center" }}>BH e região</Eyebrow>
         </Rise>
@@ -613,10 +655,10 @@ function Cta() {
           </div>
         </Rise>
       </div>
-      <div style={{ position: "absolute", top: 1230, left: 540 - 115 }}>
+      <div style={{ position: "absolute", top: 1230, left: 540 - 115, transform: `translateY(${grow * (AVATAR_Y - 1345)}px) scale(${1 + grow * 1.45})` }}>
         <Rise at={a + 64} y={40}>
           <div style={{ position: "relative" }}>
-            <Orb press={press} />
+            <Orb press={press} dot={pop} glow={glow} />
             {[rip, rip2].map((r, k) => (
               <div
                 key={k}
@@ -633,7 +675,7 @@ function Cta() {
           </div>
         </Rise>
       </div>
-      <div style={{ position: "absolute", top: 1660, width: "100%", textAlign: "center" }}>
+      <div style={{ position: "absolute", top: 1660, width: "100%", textAlign: "center", ...leaving }}>
         <Rise at={CLICK + 6}>
           <p style={{ fontFamily: SANS, fontWeight: 500, fontSize: 58, color: "#fff", margin: 0, letterSpacing: "-0.02em", textShadow: "0 2px 30px rgb(11 13 18 / .9)" }}>
             zed-dev.vercel.app
@@ -642,6 +684,26 @@ function Cta() {
         <Rise at={CLICK + 12}>
           <p style={{ fontFamily: MONO, fontSize: 26, letterSpacing: ".2em", textTransform: "uppercase", color: C.ink, opacity: 0.8, margin: "18px 0 0" }}>
             Link na bio · Belo Horizonte, MG
+          </p>
+        </Rise>
+      </div>
+      {/* end card: the profile picture, the name, the call */}
+      <div style={{ position: "absolute", top: AVATAR_Y + 250, width: "100%", textAlign: "center", textShadow: "0 4px 40px rgb(11 13 18 / .9)" }}>
+        <div style={{ fontFamily: SANS, fontWeight: 500, fontSize: 132, letterSpacing: "-0.04em", color: "#fff" }}>
+          {"zed.dev".split("").map((ch, i) => (
+            <Rise key={i} as="span" at={END + 6 + i * 2} dur={16} y={46} style={{ display: "inline-block", color: i >= 3 ? C.muted : "#fff" }}>
+              {ch}
+            </Rise>
+          ))}
+        </div>
+        <Rise at={END + 18}>
+          <p style={{ fontFamily: SERIF, fontSize: 64, color: "#fff", margin: "18px 0 0" }}>
+            Sites que trazem <Hot>clientes</Hot>.
+          </p>
+        </Rise>
+        <Rise at={END + 28}>
+          <p style={{ fontFamily: MONO, fontSize: 27, letterSpacing: ".2em", textTransform: "uppercase", color: C.ink, opacity: 0.85, margin: "34px 0 0" }}>
+            Siga · Orçamento no link da bio
           </p>
         </Rise>
       </div>
@@ -670,13 +732,13 @@ export default function Promo({ music = true }) {
     <AbsoluteFill style={{ background: C.black, fontFamily: SANS, overflow: "hidden" }}>
       <Background />
       {on(f, T.intro) && <Intro />}
-      {on(f, T.logo) && <Logo />}
       {on(f, T.head) && <Headline />}
-      {on(f, T.proj) && <Projects />}
-      {on(f, T.serv) && <Services />}
-      {on(f, T.proc) && <Process />}
-      {on(f, T.stack) && <Stack />}
-      {on(f, T.cta) && <Cta />}
+      {on(f, T.logo) && <Logo />}
+      <Shot range={T.proj} exit="zwipe"><Projects /></Shot>
+      <Shot range={T.serv} enter="zwipe" exit="through"><Services /></Shot>
+      <Shot range={T.proc} enter="through" exit="back"><Process /></Shot>
+      <Shot range={T.stack} enter="back" exit="zwipe"><Stack /></Shot>
+      <Shot range={T.cta} enter="zwipe"><Cta /></Shot>
       <AbsoluteFill style={{ background: "radial-gradient(130% 90% at 50% 45%, transparent 55%, rgb(5 6 10 / .7) 100%)" }} />
       <Grain />
       {music && <Audio src={staticFile("audio/score.wav")} />}
