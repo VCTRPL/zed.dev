@@ -688,7 +688,8 @@ function Cta() {
         </Rise>
       </div>
       {/* end card: the profile picture, the name, the call */}
-      <div style={{ position: "absolute", top: AVATAR_Y + 250, width: "100%", textAlign: "center", textShadow: "0 4px 40px rgb(11 13 18 / .9)" }}>
+      <div style={{ position: "absolute", left: -60, right: -60, top: AVATAR_Y + 430, height: 520, opacity: io(f, END, END + 14), background: "radial-gradient(50% 50% at 50% 45%, rgb(11 13 18 / .82), rgb(11 13 18 / .45) 60%, transparent 85%)" }} />
+      <div style={{ position: "absolute", top: AVATAR_Y + 470, width: "100%", textAlign: "center", textShadow: "0 4px 40px rgb(11 13 18 / .95)" }}>
         <div style={{ fontFamily: SANS, fontWeight: 500, fontSize: 132, letterSpacing: "-0.04em", color: "#fff" }}>
           {"zed.dev".split("").map((ch, i) => (
             <Rise key={i} as="span" at={END + 6 + i * 2} dur={16} y={46} style={{ display: "inline-block", color: i >= 3 ? C.muted : "#fff" }}>
