@@ -68,7 +68,7 @@ const D = 22; // transition length
 
 // A scene with its entrance and exit: "zwipe" (through a Z), "through"
 // (camera flies through it), "back" (camera pulls back), or none.
-export function Shot({ range: [a, b], enter, exit, children }) {
+export function Shot({ range: [a, b], enter, exit, from, children }) {
   const f = useCurrentFrame();
   if (f < a || f >= b) return null;
   const ti = enter ? io(f, a, a + D, (x) => x) : 1;
@@ -85,10 +85,33 @@ export function Shot({ range: [a, b], enter, exit, children }) {
       rim = <ZRim xf={[540, 960]} s={s} opacity={1 - io(f, a + D - 5, a + D)} />;
       backdrop = 1 - io(f, a + D - 8, a + D);
     }
+    if (enter === "iris") {
+      // the next scene opens out of the orange dot
+      const r = 6 + 2300 * Math.pow(ti, 2.2);
+      style = { clipPath: `circle(${r}px at ${from.x}px ${from.y}px)` };
+      const ro = 1 - io(f, a + D - 5, a + D);
+      rim = (
+        <div
+          style={{
+            position: "absolute",
+            left: from.x - r,
+            top: from.y - r,
+            width: 2 * r,
+            height: 2 * r,
+            borderRadius: "50%",
+            border: `${Math.max(3, 14 * (1 - ti))}px solid ${C.orange}`,
+            boxShadow: "0 0 40px rgb(255 164 99 / .9), inset 0 0 40px rgb(255 164 99 / .6)",
+            opacity: ro,
+          }}
+        />
+      );
+      backdrop = 1 - io(f, a + D - 8, a + D);
+    }
     if (enter === "through") style = { transform: `scale(${0.7 + 0.3 * e})`, filter: `blur(${(1 - e) * 18}px)`, opacity: e };
     if (enter === "back") style = { transform: `scale(${1.5 - 0.5 * e})`, filter: `blur(${(1 - e) * 18}px)`, opacity: e };
   }
   if (te > 0) {
+    if (exit === "iris") style = { filter: `blur(${te * 8}px)`, opacity: 1 - io(te, 0.5, 1) };
     if (exit === "zwipe") style = { transform: `scale(${1 + te * 0.12})`, filter: `blur(${te * 6}px)`, opacity: 1 - io(te, 0.55, 1) };
     if (exit === "through") style = { transform: `scale(${1 + te * 0.9})`, filter: `blur(${te * 22}px)`, opacity: 1 - te };
     if (exit === "back") style = { transform: `scale(${1 - te * 0.4})`, filter: `blur(${te * 18}px)`, opacity: 1 - te };
