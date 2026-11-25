@@ -8,10 +8,16 @@ import Quote from "./components/Quote";
 import HalftoneFooter from "./components/HalftoneFooter";
 import { links } from "./data/site";
 
-// Fallback for browsers without scroll-driven animations: reveal on intersection.
+// Reveal blocks as they enter the viewport. Time-based (not tied to the scroll
+// position) so it reads on desktop too, where a wheel step jumps far; blocks
+// that share a parent come in one after another.
 function useReveal() {
   useEffect(() => {
-    if (CSS.supports?.("animation-timeline: view()")) return;
+    const els = document.querySelectorAll(".reveal");
+    els.forEach((el) => {
+      const siblings = [...el.parentElement.children].filter((c) => c.classList.contains("reveal"));
+      el.style.setProperty("--rd", Math.min(siblings.indexOf(el), 4) * 90 + "ms");
+    });
     const io = new IntersectionObserver(
       (entries) =>
         entries.forEach((e) => {
@@ -20,9 +26,9 @@ function useReveal() {
             io.unobserve(e.target);
           }
         }),
-      { rootMargin: "0px 0px -12% 0px" },
+      { rootMargin: "0px 0px -10% 0px" },
     );
-    document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+    els.forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, []);
 }

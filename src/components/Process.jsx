@@ -35,7 +35,7 @@ export default function Process() {
             <li
               key={s.title}
               onPointerMove={trackPointer}
-              className="reveal stack-card glass card-lit lift relative rounded-[24px] p-6 md:p-7"
+              className="reveal stack-card glass glass-still card-lit lift relative rounded-[24px] p-6 md:p-7"
               style={{ "--i": i }}
             >
               <div className="flex items-center justify-between">

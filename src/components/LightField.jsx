@@ -236,7 +236,9 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
       w = Math.max(1, Math.round(r.width));
       h = Math.max(1, Math.round(r.height));
       // the field is soft, so it renders below device resolution
-      const scale = perf.lite ? 0.4 : Math.min(window.devicePixelRatio || 1, 2) * 0.45;
+      let scale = perf.lite ? 0.4 : Math.min(window.devicePixelRatio || 1, 2) * 0.45;
+      // at most ~0.9 MP per field, so big monitors don't pay for invisible detail
+      scale = Math.min(scale, Math.sqrt(900000 / (w * h)));
       canvas.width = Math.max(1, Math.round(w * scale));
       canvas.height = Math.max(1, Math.round(h * scale));
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -257,9 +259,9 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
     const tick = (now) => {
       raf = 0;
       if (!visible) return;
-      // ~30 fps on lite devices and while the page is scrolling, so scrolling stays smooth
-      if ((perf.lite || now - lastScroll < 200) && now - prev < 32) {
-        raf = requestAnimationFrame(tick); // ~30 fps on lite
+      // ~30 fps: the light drifts slowly, and the freed frame time keeps scrolling smooth
+      if (now - prev < 32) {
+        raf = requestAnimationFrame(tick);
         return;
       }
       if (!perf.lite && prev && frames < 120) {
@@ -283,11 +285,6 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
       draw(performance.now());
     });
     ro.observe(box);
-    let lastScroll = -1e9;
-    const onScroll = () => {
-      lastScroll = performance.now();
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
     const io = new IntersectionObserver(([e]) => {
       visible = e ? e.isIntersecting : true;
       if (visible) start();
@@ -309,7 +306,6 @@ export default function LightField({ horizon = 0.88, anchor = "viewport", spread
       io.disconnect();
       offLite();
       window.removeEventListener("zed:pulse", onPulse);
-      window.removeEventListener("scroll", onScroll);
       gl.deleteBuffer(buf);
       gl.deleteProgram(prog);
       gl.deleteShader(vs);
