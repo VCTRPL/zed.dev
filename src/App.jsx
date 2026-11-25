@@ -38,7 +38,7 @@ const footerColumns = [
     title: "Projetos",
     links: [
       { label: "XCAR Veículos", href: "https://xcar-theta.vercel.app" },
-      { label: "Oi Veículos", href: "https://oi-veiculos.vercel.app" },
+      { label: "zed.dev", href: "#top" },
       { label: "Portfólio 3D", href: "https://vctrpl.vercel.app" },
     ],
   },
