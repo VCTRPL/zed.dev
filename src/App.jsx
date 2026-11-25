@@ -22,7 +22,8 @@ function useReveal() {
       (entries) =>
         entries.forEach((e) => {
           if (e.isIntersecting) {
-            e.target.classList.add("in");
+            // an attribute, not a class: React rewrites className on re-render
+            e.target.setAttribute("data-in", "");
             io.unobserve(e.target);
           }
         }),

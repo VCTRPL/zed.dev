@@ -650,7 +650,7 @@ body:after {
     transform 1.1s var(--ease-out) var(--rd, 0ms),
     filter 0.9s var(--ease-out) var(--rd, 0ms);
 }
-.reveal.in {
+.reveal[data-in] {
   opacity: 1;
   transform: none;
   filter: none;
