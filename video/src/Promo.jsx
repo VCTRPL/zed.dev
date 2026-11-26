@@ -17,7 +17,7 @@ const ZOOM_A = 264; // camera dives through the Z
 const ZOOM_B = 294;
 const SLAMS = [290, 326, 362]; // Sites / Sistemas / Experiências em 3D
 const ORB_AT = 946; // the profile picture forms
-const END_POP = 978; // its dot pops
+const END_POP = 974; // its dot pops
 
 // ---- copy and where each line's dot sits
 const A1 = [["Seu cliente decide"]];
