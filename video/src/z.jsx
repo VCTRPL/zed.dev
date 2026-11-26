@@ -1,5 +1,5 @@
 import { AbsoluteFill, useCurrentFrame } from "remotion";
-import { C, easeIn, easeInOut, io, lerp } from "./kit";
+import { C, easeIn, easeInOut, easeOut, io, lerp } from "./kit";
 
 // The Z of the logo as a transition device. Path coordinates are the logo's
 // (512 box, with its translate(-22 4)); (228, 260) is the middle of the
@@ -66,30 +66,32 @@ export function ZRim({ xf, s, opacity = 1 }) {
 
 const D = 22; // transition length
 
-// A scene with its entrance and exit: "zwipe" (through a Z), "through"
-// (camera flies through it), "back" (camera pulls back), or none.
-export function Shot({ range: [a, b], enter, exit, from, children }) {
+// Shared geometry, so the outgoing scene is cut away by exactly the shape the
+// incoming one grows through (t: 0..1 through the transition, linear).
+const irisR = (t) => 6 + 2300 * Math.pow(t, 2.2);
+const zGeom = (t) => ({ s: wipeScale(Math.pow(t, 1.7)), rot: (1 - easeInOut(t)) * -16 });
+const circlePath = (x, y, r) => `M${x - r} ${y} A${r} ${r} 0 1 0 ${x + r} ${y} A${r} ${r} 0 1 0 ${x - r} ${y} Z`;
+
+// A scene with its entrance and exit: "zwipe" (through a Z), "iris" (out of
+// a dot at `from`, or into the dot at `to`), "through" (camera flies through
+// it), "back" (camera pulls back), or none. Consecutive scenes overlap by D.
+export function Shot({ range: [a, b], enter, exit, from, to, children }) {
   const f = useCurrentFrame();
   if (f < a || f >= b) return null;
   const ti = enter ? io(f, a, a + D, (x) => x) : 1;
-  const te = exit ? io(f, b - D, b, easeIn) : 0;
+  const tl = exit ? io(f, b - D, b, (x) => x) : 0;
   let style = {};
   let rim = null;
-  let backdrop = 0;
   if (ti < 1) {
     const e = easeInOut(ti);
     if (enter === "zwipe") {
-      // the next scene grows through a Z: a speck, then wider than the screen
-      const s = { s: wipeScale(Math.pow(ti, 1.7)), rot: (1 - e) * -16 };
-      style = zClip(540, 960, s.s, s.rot);
-      rim = <ZRim xf={[540, 960]} s={s} opacity={1 - io(f, a + D - 5, a + D)} />;
-      backdrop = 1 - io(f, a + D - 8, a + D);
+      const g = zGeom(ti);
+      style = zClip(540, 960, g.s, g.rot);
+      rim = <ZRim xf={[540, 960]} s={g} opacity={1 - io(f, a + D - 5, a + D)} />;
     }
     if (enter === "iris") {
-      // the next scene opens out of the orange dot
-      const r = 6 + 2300 * Math.pow(ti, 2.2);
+      const r = irisR(ti);
       style = { clipPath: `circle(${r}px at ${from.x}px ${from.y}px)` };
-      const ro = 1 - io(f, a + D - 5, a + D);
       rim = (
         <div
           style={{
@@ -101,28 +103,29 @@ export function Shot({ range: [a, b], enter, exit, from, children }) {
             borderRadius: "50%",
             border: `${Math.max(3, 14 * (1 - ti))}px solid ${C.orange}`,
             boxShadow: "0 0 40px rgb(255 164 99 / .9), inset 0 0 40px rgb(255 164 99 / .6)",
-            opacity: ro,
+            opacity: 1 - io(f, a + D - 5, a + D),
           }}
         />
       );
-      backdrop = 1 - io(f, a + D - 8, a + D);
     }
     if (enter === "through") style = { transform: `scale(${0.7 + 0.3 * e})`, filter: `blur(${(1 - e) * 18}px)`, opacity: e };
     if (enter === "back") style = { transform: `scale(${1.5 - 0.5 * e})`, filter: `blur(${(1 - e) * 18}px)`, opacity: e };
   }
-  if (te > 0) {
-    if (exit === "iris") style = { filter: `blur(${te * 8}px)`, opacity: 1 - io(te, 0.5, 1) };
-    if (exit === "zwipe") style = { transform: `scale(${1 + te * 0.12})`, filter: `blur(${te * 6}px)`, opacity: 1 - io(te, 0.55, 1) };
-    if (exit === "through") style = { transform: `scale(${1 + te * 0.9})`, filter: `blur(${te * 22}px)`, opacity: 1 - te };
-    if (exit === "back") style = { transform: `scale(${1 - te * 0.4})`, filter: `blur(${te * 18}px)`, opacity: 1 - te };
+  if (tl > 0) {
+    // leaving starts at once (ease-out), so it never lingers over the next scene
+    const q = easeOut(tl);
+    if (exit === "iris") style = { clipPath: `path(evenodd, "M-20 -20 H1100 V1940 H-20 Z ${circlePath(to.x, to.y, irisR(tl))}")` };
+    if (exit === "zwipe") {
+      const g = zGeom(tl);
+      style = zClip(540, 960, g.s, g.rot, true);
+    }
+    if (exit === "through") style = { transform: `scale(${1 + q * 0.9})`, filter: `blur(${q * 22}px)`, opacity: 1 - io(tl, 0, 0.6) };
+    if (exit === "back") style = { transform: `scale(${1 - q * 0.4})`, filter: `blur(${q * 18}px)`, opacity: 1 - io(tl, 0, 0.6) };
   }
   return (
     <>
       {/* a plain div: Remotion's AbsoluteFill does not pass clip-path through */}
-      <div style={{ position: "absolute", inset: 0, ...style }}>
-        {backdrop > 0 && <div style={{ position: "absolute", inset: 0, background: `rgb(11 13 18 / ${0.8 * backdrop})` }} />}
-        {children}
-      </div>
+      <div style={{ position: "absolute", inset: 0, ...style }}>{children}</div>
       {rim}
     </>
   );

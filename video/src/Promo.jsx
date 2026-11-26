@@ -36,9 +36,9 @@ const SLAM_WORDS = [
 const SLAM_Y = 760;
 
 const VALUES = [
-  { segs: [["Rápido"]], at: 520 },
-  { segs: [["Responsivo"]], at: 560 },
-  { segs: [["Sob medida"]], at: 600 },
+  { segs: [["Rápido"]], at: 494 },
+  { segs: [["Responsivo"]], at: 524 },
+  { segs: [["Sob medida"]], at: 564 },
 ];
 const VAL = { size: 196, y: 760 };
 const valDot = (i) => dotOf(VALUES[i].segs, VAL.size, VAL.y);
@@ -199,8 +199,8 @@ function ManifestoB() {
   return (
     <AbsoluteFill>
       <Scrim y={760} />
-      <Line segs={B1} size={MAN.size} y={MAN.y1} at={150} out={190} />
-      <Line segs={B2} size={MAN.size} y={MAN.y2} at={162} dot dotAt={174} out={192} hideDot={f >= 194} />
+      <Line segs={B1} size={MAN.size} y={MAN.y1} at={112} out={190} />
+      <Line segs={B2} size={MAN.size} y={MAN.y2} at={118} dot dotAt={126} out={192} hideDot={f >= 194} />
       {on(f, 194, LOGO_DOT) && <Dot x={x} y={y} d={d} glow={1.4} />}
     </AbsoluteFill>
   );
@@ -365,13 +365,13 @@ function Figma() {
   return (
     <AbsoluteFill>
       <Scrim y={800} />
-      <Eyebrow y={560} at={414}>
+      <Eyebrow y={560} at={406}>
         Do layout ao ar
       </Eyebrow>
-      <Line segs={[["Do Figma"]]} size={196} y={640} at={418} />
-      <Line segs={[["ao "], ["deploy", true]]} size={196} y={846} at={428} dot dotAt={446} />
+      <Line segs={[["Do Figma"]]} size={196} y={640} at={406} />
+      <Line segs={[["ao "], ["deploy", true]]} size={196} y={846} at={412} dot dotAt={428} />
       <div style={{ position: "absolute", top: 1120, width: "100%", textAlign: "center" }}>
-        <Rise at={452}>
+        <Rise at={426}>
           <p style={{ fontFamily: MONO, fontSize: 31, lineHeight: 1.7, color: C.ink, margin: "0 auto", maxWidth: 860, textShadow: "0 2px 24px rgb(11 13 18 / .95)" }}>
             Design, código e publicação.
             <br />
@@ -393,13 +393,13 @@ function Values() {
   return (
     <AbsoluteFill>
       <Scrim y={820} />
-      <Eyebrow y={640} at={514}>
+      <Eyebrow y={640} at={492}>
         Todo projeto é
       </Eyebrow>
-      <Shot range={[508, 566]} exit="iris">
+      <Shot range={[508, 566]} exit="iris" to={valDot(0)}>
         <Value i={0} />
       </Shot>
-      <Shot range={[544, 606]} enter="iris" from={valDot(0)} exit="iris">
+      <Shot range={[544, 606]} enter="iris" from={valDot(0)} exit="iris" to={valDot(1)}>
         <Value i={1} />
       </Shot>
       <Shot range={[584, 648]} enter="iris" from={valDot(1)}>
@@ -414,14 +414,14 @@ function Promise_() {
   return (
     <AbsoluteFill>
       <Scrim y={840} h={900} />
-      <Eyebrow y={520} at={630}>
+      <Eyebrow y={520} at={620}>
         Sem intermediários
       </Eyebrow>
-      <Line segs={[["Uma pessoa"]]} size={168} y={600} at={634} dot dotAt={650} />
-      <Line segs={[["Do primeiro traço"]]} size={112} y={826} at={652} />
-      <Line segs={[["ao site "], ["no ar", true]]} size={112} y={946} at={662} dot dotAt={680} />
+      <Line segs={[["Uma pessoa"]]} size={168} y={600} at={622} dot dotAt={636} />
+      <Line segs={[["Do primeiro traço"]]} size={112} y={826} at={632} />
+      <Line segs={[["ao site "], ["no ar", true]]} size={112} y={946} at={640} dot dotAt={656} />
       <div style={{ position: "absolute", top: 1150, width: "100%", textAlign: "center" }}>
-        <Rise at={684}>
+        <Rise at={660}>
           <p style={{ fontFamily: MONO, fontSize: 31, color: C.ink, margin: 0, textShadow: "0 2px 24px rgb(11 13 18 / .95)" }}>Quem atende é quem constrói.</p>
         </Rise>
       </div>
@@ -463,9 +463,9 @@ function Tech() {
   return (
     <AbsoluteFill>
       <Scrim y={850} h={1000} />
-      <Line segs={[["Feito com o "], ["melhor", true]]} size={132} y={600} at={748} dot dotAt={764} />
-      <Marquee items={TECH} dir={1} y={860} at={752} />
-      <Marquee items={[...TECH].reverse()} dir={-1} y={990} at={758} />
+      <Line segs={[["Feito com o "], ["melhor", true]]} size={132} y={600} at={738} dot dotAt={754} />
+      <Marquee items={TECH} dir={1} y={860} at={740} />
+      <Marquee items={[...TECH].reverse()} dir={-1} y={990} at={744} />
     </AbsoluteFill>
   );
 }
@@ -499,11 +499,11 @@ function BH() {
   return (
     <AbsoluteFill>
       <Scrim y={800} />
-      <Eyebrow y={600} at={856} out={ORB_AT - 26}>
+      <Eyebrow y={600} at={812} out={ORB_AT - 26}>
         Atendimento
       </Eyebrow>
-      <Line segs={[["Belo Horizonte"]]} size={BHL.size} y={BHL.y1} at={860} out={ORB_AT - 24} />
-      <Line segs={BH2} size={BHL.size} y={BHL.y2} at={872} dot dotAt={878} out={ORB_AT - 22} hideDot={f >= ORB_AT - 22} />
+      <Line segs={[["Belo Horizonte"]]} size={BHL.size} y={BHL.y1} at={812} out={ORB_AT - 24} />
+      <Line segs={BH2} size={BHL.size} y={BHL.y2} at={816} dot dotAt={826} out={ORB_AT - 22} hideDot={f >= ORB_AT - 22} />
       {rings}
       {on(f, ORB_AT - 22, ORB_AT + 4) && (
         <Dot x={lerp(fly, p.x, 540)} y={lerp(fly, p.y, AVATAR_Y) - Math.sin(fly * Math.PI) * 120} d={lerp(fly, p.d, 60)} glow={1.5} />
@@ -618,13 +618,15 @@ export default function Promo({ music = true }) {
     <AbsoluteFill style={{ background: C.black, fontFamily: SANS, overflow: "hidden" }}>
       <Background />
       {on(f, 0, IGNITE + 42) && <Spark />}
-      <Shot range={[82, 160]} exit="iris">
+      <Shot range={[82, 160]} exit="iris" to={dotA()}>
         <ManifestoA />
       </Shot>
       <Shot range={[138, 216]} enter="iris" from={dotA()}>
         <ManifestoB />
       </Shot>
-      {on(f, 270, 432) && <Slams />}
+      <Shot range={[270, 432]} exit="through">
+        <Slams />
+      </Shot>
       {on(f, 196, ZOOM_B + 1) && <Logo />}
       <Shot range={[410, 530]} enter="through" exit="zwipe">
         <Figma />
