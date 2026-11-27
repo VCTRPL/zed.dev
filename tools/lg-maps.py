@@ -54,7 +54,7 @@ def glass_map(w, h, radius, bezel, magnify, ss=3):
     vx += -magnify * px / (W / 2)
     vy += -magnify * py / (H / 2)
     length = np.hypot(vx, vy)
-    k = np.where(length > 1, 1 / length, 1)
+    k = 1 / np.maximum(length, 1)
     vx, vy = vx * k, vy * k
     vx = np.where(d >= 0, vx, 0)
     vy = np.where(d >= 0, vy, 0)
@@ -67,5 +67,5 @@ def glass_map(w, h, radius, bezel, magnify, ss=3):
 
 if __name__ == "__main__":
     glass_map(92, 92, 46, 22, 0.05).save("src/assets/lg/orb-map.png")
-    glass_map(340, 198, 22, 26, 0.04).save("src/assets/lg/folder-map.png")
+    glass_map(340, 198, 22, 26, 0.0)  # folders: no centre magnification.save("src/assets/lg/folder-map.png")
     print("ok")

@@ -269,21 +269,6 @@ export default function GlassFolder({
               </defs>
               <path d={FRONT_PATH} stroke={`url(#gf-rim-${uid})`} />
             </svg>
-            {/* thickness: soft shading along the inside of the edge (the outer
-                half of the stroke is clipped away with the glass) */}
-            <svg className="gf-rim gf-front-depth" viewBox={`0 0 ${W} ${FRONT_H}`} aria-hidden="true">
-              <defs>
-                <linearGradient id={"gf-depth-" + uid} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stopColor="#fff" stopOpacity="0.28" />
-                  <stop offset="0.45" stopColor="#fff" stopOpacity="0.04" />
-                  <stop offset="1" stopColor="#000" stopOpacity="0.5" />
-                </linearGradient>
-                <filter id={"gf-soft-" + uid} x="-10%" y="-10%" width="120%" height="120%">
-                  <feGaussianBlur stdDeviation="6" />
-                </filter>
-              </defs>
-              <path d={FRONT_PATH} stroke={`url(#gf-depth-${uid})`} filter={`url(#gf-soft-${uid})`} />
-            </svg>
             {/* specular: the stretch of rim that faces the light lights up */}
             <svg className="gf-rim gf-front-spec" viewBox={`0 0 ${W} ${FRONT_H}`} aria-hidden="true">
               <path d={FRONT_PATH} />

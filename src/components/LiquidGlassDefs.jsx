@@ -30,9 +30,19 @@ function Filter({ id, w, h, href, scale, spread }) {
     />,
     <feColorMatrix key={ch + "m"} in={ch + "d"} type="matrix" values={ONLY[ch]} result={ch} />,
   ];
+  const image = <feImage result="map" x="0" y="0" width={w} height={h} preserveAspectRatio="none" href={href} />;
+  if (!spread) {
+    // a single pass: refraction without the colour fringe
+    return (
+      <filter id={id} colorInterpolationFilters="sRGB" x="0%" y="0%" width="100%" height="100%">
+        {image}
+        <feDisplacementMap in="SourceGraphic" in2="map" scale={scale} xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    );
+  }
   return (
     <filter id={id} colorInterpolationFilters="sRGB" x="0%" y="0%" width="100%" height="100%">
-      <feImage result="map" x="0" y="0" width={w} height={h} preserveAspectRatio="none" href={href} />
+      {image}
       {pass("r", 1)}
       {pass("g", 1 + spread)}
       {pass("b", 1 + spread * 2)}
@@ -47,7 +57,7 @@ export default function LiquidGlassDefs() {
     <svg width="0" height="0" aria-hidden="true" focusable="false" style={{ position: "absolute", overflow: "hidden" }}>
       <defs>
         <Filter id="lg-orb" w={92} h={92} href={orbMap} scale={-20} spread={0.035} />
-        <Filter id="lg-folder" w={340} h={198} href={folderMap} scale={-22} spread={0.035} />
+        <Filter id="lg-folder" w={340} h={198} href={folderMap} scale={-22} spread={0} />
       </defs>
     </svg>
   );
