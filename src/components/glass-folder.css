@@ -512,6 +512,12 @@ canvas.gf-sheet-art[data-ready] { opacity: 1; filter: none; }
 .gf-root[data-entered] .gf-front { transition-delay: 0s, .42s, .42s; }
 .gf-key { transition: transform .35s var(--gf-spring), box-shadow .35s var(--gf-ease), opacity .6s var(--gf-ease) .7s, scale .7s var(--gf-spring) .7s; }
 
+/* Liquid Glass (desktop Chromium): lighter blur so the rim refraction reads */
+html.lg-fine:not(.lite) .gf-front {
+  -webkit-backdrop-filter: blur(14px) url(#lg-folder) saturate(1.5);
+  backdrop-filter: blur(14px) url(#lg-folder) saturate(1.5);
+}
+
 /* weak machines: no live blur, a denser tint stands in for it */
 .lite .gf-front, .lite .gf-key--more, .lite .gf-menu { -webkit-backdrop-filter: none; backdrop-filter: none; }
 .lite .gf-root[data-tone="dark"] .gf-tint { background: linear-gradient(180deg, rgba(16, 22, 40, .72) 0%, rgba(12, 15, 26, .9) 46%, rgba(9, 11, 16, .97) 100%); }

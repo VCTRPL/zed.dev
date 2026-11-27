@@ -284,6 +284,12 @@ body:after {
     animation: none;
   }
 }
+/* Liquid Glass (Chromium): the rim bends what is behind the orb. No blur, so it
+   stays clear glass; saturate keeps the colours rich through the bend. */
+html.lg:not(.lite) .orb {
+  -webkit-backdrop-filter: url(#lg-orb) saturate(1.35) brightness(1.06);
+  backdrop-filter: url(#lg-orb) saturate(1.35) brightness(1.06);
+}
 /* ---- orb interactions: hover glint, press, click ripple ---- */
 .orb {
   cursor: pointer;

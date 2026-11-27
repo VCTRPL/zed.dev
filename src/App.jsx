@@ -6,6 +6,7 @@ import Process from "./components/Process";
 import About from "./components/About";
 import Quote from "./components/Quote";
 import HalftoneFooter from "./components/HalftoneFooter";
+import LiquidGlassDefs from "./components/LiquidGlassDefs";
 import { links } from "./data/site";
 
 // Reveal blocks as they enter the viewport. Time-based (not tied to the scroll
@@ -67,6 +68,7 @@ export default function App() {
 
   return (
     <>
+      <LiquidGlassDefs />
       <div className="scroll-progress" aria-hidden="true" />
       <a
         href="#conteudo"

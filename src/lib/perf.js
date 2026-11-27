@@ -31,6 +31,18 @@ if (perf.lite && typeof document !== "undefined") {
   document.documentElement.classList.add("lite");
 }
 
+// Liquid Glass: Chromium can bend the backdrop through an SVG filter, other
+// engines cannot (they keep the plain blur). `lg-fine` is desktop-class
+// input, where the large glass panels can afford the extra filter.
+if (typeof document !== "undefined") {
+  const ua = nav.userAgent || "";
+  if (/Chrome\/|Chromium\/|Edg\//.test(ua)) {
+    const cl = document.documentElement.classList;
+    cl.add("lg");
+    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) cl.add("lg-fine");
+  }
+}
+
 export const prefersReducedMotion = () =>
   typeof window !== "undefined" &&
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
