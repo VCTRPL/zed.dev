@@ -3,6 +3,7 @@ import LightField from "./LightField";
 import GlassFolder from "./GlassFolder";
 import { Arrow, ZedMark } from "./icons";
 import { delay, projects } from "../data/site";
+import { catchLight } from "../lib/light";
 
 function Stat({ n, label, align = "left", wait }) {
   return (
@@ -29,14 +30,33 @@ function RoundButton({ dir, onClick, label }) {
 // The glass orb: a glint crosses it on hover, it sinks on press, and a click
 // sends a ripple out and a brief pulse through the light behind it.
 function OrbButton() {
+  const ref = useRef(null);
   const [ripples, setRipples] = useState([]);
+  useEffect(() => catchLight(ref.current), []);
   const onClick = () => {
     const id = Date.now();
     setRipples((r) => [...r, id]);
     window.dispatchEvent(new CustomEvent("zed:pulse"));
+    // the glass wobbles like jelly after the press (restart the animation)
+    const el = ref.current;
+    if (el) {
+      el.classList.remove("jelly");
+      void el.offsetWidth;
+      el.classList.add("jelly");
+    }
   };
   return (
-    <a href="#projetos" aria-label="Ver os projetos" className="orb" onClick={onClick}>
+    <a
+      ref={ref}
+      href="#projetos"
+      aria-label="Ver os projetos"
+      className="orb"
+      data-light=""
+      onClick={onClick}
+      onAnimationEnd={(e) => e.animationName === "orb-jelly" && e.currentTarget.classList.remove("jelly")}
+    >
+      <span className="orb-depth" aria-hidden="true" />
+      <span className="orb-spec" aria-hidden="true" />
       <span className="orb-glint" aria-hidden="true" />
       <ZedMark className="orb-mark h-10 w-10 text-white" />
       {ripples.map((id) => (
@@ -90,7 +110,41 @@ function ProjectSlot({ p, i, active, onActive }) {
   );
 }
 
+// The hero recedes as it scrolls away. Done here rather than with a CSS
+// scroll-driven animation: that one stays live all the time, and Chromium then
+// cuts the glass orb off from the light behind it. At rest no style is set.
+function useRecede(ref) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const r = el.getBoundingClientRect();
+      const t = Math.min(1, Math.max(0, (-r.top / r.height - 0.1) / 0.75));
+      if (t <= 0) {
+        el.style.opacity = "";
+        el.style.transform = "";
+        return;
+      }
+      el.style.opacity = String(1 - 0.85 * t);
+      el.style.transform = `translateY(${-8 * t}%) scale(${1 - 0.06 * t})`;
+    };
+    const onScroll = () => {
+      raf ||= requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [ref]);
+}
+
 export default function Hero() {
+  const heroRef = useRef(null);
+  useRecede(heroRef);
   const [active, setActive] = useState(0);
   const step = (d) => setActive((v) => (v + d + projects.length) % projects.length);
   const current = projects[active];
@@ -104,7 +158,7 @@ export default function Hero() {
       </div>
 
       <div className="relative mx-auto max-w-[1320px] px-5 md:px-8">
-        <div className="hero-out relative flex min-h-[86svh] flex-col items-center pt-[clamp(84px,13svh,112px)] text-center md:pt-[clamp(88px,13svh,144px)]">
+        <div ref={heroRef} className="hero-out relative flex min-h-[86svh] flex-col items-center pt-[clamp(84px,13svh,112px)] text-center md:pt-[clamp(88px,13svh,144px)]">
           <div
             aria-hidden="true"
             className="pointer-events-none absolute left-1/2 top-[18%] -z-10 h-[52%] w-[min(900px,100%)] -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_50%,rgb(11_13_18/.62),rgb(11_13_18/.3)_55%,transparent_80%)]"
@@ -170,7 +224,7 @@ export default function Hero() {
             </a>
           </div>
 
-          <div className="enter mt-auto pb-6 pt-[clamp(14px,4.5svh,56px)]" style={delay(320)}>
+          <div className="enter enter-clear mt-auto pb-6 pt-[clamp(14px,4.5svh,56px)]" style={delay(320)}>
             <OrbButton />
           </div>
         </div>

@@ -334,9 +334,56 @@ html.lg:not(.lite) .orb {
     transition: transform 0.9s var(--ease-out);
   }
 }
+/* press: the glass squashes under the finger, then wobbles back (orb-jelly) */
+.orb {
+  transition:
+    transform 0.45s var(--ease-out),
+    scale 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.45s var(--ease-out),
+    border-color 0.45s var(--ease-out);
+}
 .orb:active {
-  transform: scale(0.93);
-  transition-duration: 0.12s;
+  scale: 1.06 0.9;
+  transition-duration: 0.45s, 0.12s, 0.45s, 0.45s;
+}
+.orb.jelly {
+  animation:
+    orb-jelly 0.75s linear,
+    orb-frost 7s ease-in-out 1.4s infinite;
+}
+@keyframes orb-jelly {
+  0% { scale: 1.06 0.9; }
+  16% { scale: 0.9 1.08; }
+  32% { scale: 1.06 0.95; }
+  48% { scale: 0.97 1.03; }
+  66% { scale: 1.015 0.99; }
+  84% { scale: 0.995 1.005; }
+  100% { scale: 1; }
+}
+
+/* Light on the glass: a bright crescent on the rim facing the light, a fainter
+   one opposite (light passing through and bouncing off the far side), and the
+   thickness of the glass as soft inner shading. --lx/--ly come from light.js. */
+.orb-spec {
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at calc(50% + var(--lx, -0.45) * 52%) calc(50% + var(--ly, -0.75) * 52%), rgb(255 255 255 / 1), rgb(255 255 255 / 0.5) 16%, rgb(255 255 255 / 0) 42%),
+    radial-gradient(circle at calc(50% - var(--lx, -0.45) * 52%) calc(50% - var(--ly, -0.75) * 52%), rgb(255 230 210 / 0.55), rgb(255 230 210 / 0) 34%);
+  -webkit-mask: radial-gradient(circle closest-side, transparent 84%, #000 94%, #000 100%);
+  mask: radial-gradient(circle closest-side, transparent 84%, #000 94%, #000 100%);
+  transition: background 0.5s var(--ease-out);
+}
+.orb-depth {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  box-shadow:
+    inset calc(var(--lx, -0.45) * -6px) calc(var(--ly, -0.75) * -7px) 14px -4px rgb(0 0 0 / 0.26),
+    inset calc(var(--lx, -0.45) * 5px) calc(var(--ly, -0.75) * 6px) 12px -5px rgb(255 255 255 / 0.4);
 }
 .orb-ripple {
   position: absolute;
@@ -360,8 +407,12 @@ html.lg:not(.lite) .orb {
 @media (prefers-reduced-motion: reduce) {
   .orb,
   .orb-mark,
-  .orb-glint::after {
+  .orb-glint::after,
+  .orb-spec {
     transition: none;
+  }
+  .orb.jelly {
+    animation: orb-frost 7s ease-in-out 1.4s infinite;
   }
   .orb-ripple {
     animation-duration: 0.01s;
@@ -410,6 +461,24 @@ html.lg:not(.lite) .orb {
     opacity: 1;
     transform: none;
     filter: none;
+  }
+}
+/* Same entrance without the blur, for wrappers of glass: an ancestor that keeps
+   any filter (even blur(0px), which is what "filter: none" animates to)
+   cuts the backdrop off, and the glass would see nothing behind it. */
+.enter.enter-clear {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  /* fill "backwards", not "forwards": once it ends the animation is gone.
+     Chromium treats an element with a live opacity animation as cut off
+     from what lies behind it, even at opacity 1. */
+  animation: enter-clear 0.9s var(--ease-out) var(--d, 0ms) backwards;
+}
+@keyframes enter-clear {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
   }
 }
 .marquee {
@@ -665,17 +734,9 @@ html.lg:not(.lite) .orb {
   display: none;
 }
 @supports (animation-timeline: view()) {
-  .hero-out {
-    animation: recede linear both;
-    animation-timeline: view();
-    animation-range: exit 10% exit 85%;
-  }
-  @keyframes recede {
-    to {
-      opacity: 0.15;
-      transform: translateY(-8%) scale(0.94);
-    }
-  }
+  /* .hero-out recedes as it scrolls away: driven from Hero.jsx, not a
+     scroll-driven animation, which would stay live and cut the glass orb
+     off from the light behind it */
   .flowline {
     transform-origin: left;
     animation: draw linear both;

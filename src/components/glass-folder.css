@@ -356,6 +356,27 @@ canvas.gf-sheet-art[data-ready] { opacity: 1; filter: none; }
   pointer-events: none;
 }
 .gf-root[data-tone="dark"] .gf-spec { mix-blend-mode: screen; opacity: .16; }
+/* the sheen also leans toward the light (--lx/--ly from light.js) */
+.gf-spec {
+  background: radial-gradient(260px 200px at calc(50% + (var(--gf-px) * .6 + var(--lx, -.45) * .5) * 46%) calc(30% + (var(--gf-py) * .6 + var(--ly, -.75) * .5) * 40%), rgba(255, 255, 255, .5), rgba(255, 255, 255, 0) 70%);
+}
+.gf-front-depth, .gf-front-spec { width: 340px; height: 198px; }
+.gf-front-depth path { fill: none; stroke-width: 22; }
+.gf-front-spec path { fill: none; stroke: #fff; stroke-width: 3.2; }
+.gf-front-spec {
+  /* only the part of the rim facing the light shows, plus a fainter echo opposite */
+  -webkit-mask:
+    radial-gradient(150px 110px at calc(50% + var(--lx, -.45) * 52%) calc(50% + var(--ly, -.75) * 62%), #000, transparent 72%),
+    radial-gradient(110px 80px at calc(50% - var(--lx, -.45) * 52%) calc(50% - var(--ly, -.75) * 62%), rgba(0, 0, 0, .4), transparent 72%);
+  mask:
+    radial-gradient(150px 110px at calc(50% + var(--lx, -.45) * 52%) calc(50% + var(--ly, -.75) * 62%), #000, transparent 72%),
+    radial-gradient(110px 80px at calc(50% - var(--lx, -.45) * 52%) calc(50% - var(--ly, -.75) * 62%), rgba(0, 0, 0, .4), transparent 72%);
+  opacity: .85;
+  mix-blend-mode: screen;
+}
+/* press: the glass gives under the finger, and springs back */
+.gf-front { transition: transform .8s var(--gf-spring), translate 1s var(--gf-ease), opacity 1s var(--gf-ease), scale .55s cubic-bezier(.34, 1.56, .64, 1); }
+.gf-front:has(.gf-hit:active) { scale: 1.012 .965; transition-duration: .8s, 1s, 1s, .12s; }
 .gf-front-rim { width: 340px; height: 198px; }
 .gf-front-rim path { stroke-width: 2.4; transition: stroke-width .3s var(--gf-ease); }
 .gf-root[data-tone="dark"] .gf-front-rim { opacity: .55; }
@@ -522,6 +543,7 @@ html.lg-fine:not(.lite) .gf-front {
 .lite .gf-front, .lite .gf-key--more, .lite .gf-menu { -webkit-backdrop-filter: none; backdrop-filter: none; }
 .lite .gf-root[data-tone="dark"] .gf-tint { background: linear-gradient(180deg, rgba(16, 22, 40, .72) 0%, rgba(12, 15, 26, .9) 46%, rgba(9, 11, 16, .97) 100%); }
 .lite .gf-shadow { filter: none; opacity: .5; }
+.lite .gf-front-depth path { filter: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .gf-root *, .gf-root *::before, .gf-root *::after {
